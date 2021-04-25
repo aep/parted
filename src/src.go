@@ -19,7 +19,10 @@ import (
 
 // Main function, runs all
 func Main() {
-	godotenv.Load()
+	err := godotenv.Load()
+	if err != nil {
+		panic(err)
+	}
 
 	router := gin.Default()
 	router.HTMLRender = ginview.Wrap(gorice.NewWithConfig(rice.MustFindBox("../views"), goview.Config{
@@ -56,6 +59,8 @@ func FrontEnd(r *gin.Engine) {
 }
 
 func BackEnd(r *gin.Engine) {
+	// Building the search param.
+	// Could be passed through gin's context if need there was
 	var searchParams keywordSearchParams = keywordSearchParams{
 		Client:        &http.Client{Timeout: 5 * time.Second},
 		Field:         "manuPartNum",
@@ -69,7 +74,7 @@ func BackEnd(r *gin.Engine) {
 
 		elements, err := searchParams.Search(partNb)
 		if err != nil {
-			c.Error(err)
+			c.JSON(404, gin.H{"error": err})
 			return
 		}
 
@@ -80,8 +85,7 @@ func BackEnd(r *gin.Engine) {
 		items := InboundPOST{}
 		err := json.NewDecoder(c.Request.Body).Decode(&items)
 		if err != nil {
-			c.Error(err)
-			c.JSON(404, err)
+			c.JSON(500, gin.H{"error": err})
 			return
 		}
 
@@ -97,6 +101,7 @@ type InboundPOST struct {
 	Data        []Data `json:"data"`
 }
 
+// Data is a single data element from an inbound post
 type Data struct {
 	Product Product `json:"product,omitempty"`
 	Amount  int     `json:"amount"`

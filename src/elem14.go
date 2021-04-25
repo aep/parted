@@ -110,26 +110,30 @@ type keywordSearchParams struct {
 
 // ManufacturerPartNumberSearch returns the items searched
 type ManufacturerPartNumberSearch struct {
-	Manufacturerpartnumbersearchreturn Manufacturerpartnumbersearchreturn `json:"manufacturerPartNumberSearchReturn"`
+	Manufacturerpartnumbersearchreturn ManuFacturerPartNumberSearchReturn `json:"manufacturerPartNumberSearchReturn"`
 }
 
+// Image is a component image
 type Image struct {
 	Basename string `json:"baseName"`
 	Vrntpath string `json:"vrntPath"`
 }
 
+// Prices is the component's price
 type Prices struct {
 	To   int     `json:"to"`
 	From int     `json:"from"`
 	Cost float64 `json:"cost"`
 }
 
+// Attributes is the component's attributes
 type Attributes struct {
 	Attributelabel string `json:"attributeLabel"`
 	Attributevalue string `json:"attributeValue"`
 	Attributeunit  string `json:"attributeUnit,omitempty"`
 }
 
+// Related checks if the component has related components
 type Related struct {
 	Containalternatives            bool `json:"containAlternatives"`
 	Containcontainrohsalternatives bool `json:"containcontainRoHSAlternatives"`
@@ -137,6 +141,7 @@ type Related struct {
 	Containcontainrohsaccessories  bool `json:"containcontainRoHSAccessories"`
 }
 
+// Breakdown of the component's location
 type Breakdown struct {
 	Inv       int    `json:"inv"`
 	Region    string `json:"region"`
@@ -144,6 +149,7 @@ type Breakdown struct {
 	Warehouse string `json:"warehouse"`
 }
 
+// Regionalbreakdown is a breakdown per region
 type Regionalbreakdown struct {
 	Level                       int    `json:"level"`
 	Leastleadtime               int    `json:"leastLeadTime"`
@@ -152,6 +158,7 @@ type Regionalbreakdown struct {
 	Shipsfrommultiplewarehouses bool   `json:"shipsFromMultipleWarehouses"`
 }
 
+// Stock is the current item's stock
 type Stock struct {
 	Level                       int                 `json:"level"`
 	Leastleadtime               int                 `json:"leastLeadTime"`
@@ -161,12 +168,14 @@ type Stock struct {
 	Regionalbreakdown           []Regionalbreakdown `json:"regionalBreakdown"`
 }
 
+// Datasheets represents the item's datasheets
 type Datasheets struct {
 	Type        string `json:"type"`
 	Description string `json:"description"`
 	URL         string `json:"url"`
 }
 
+// Product represents a component
 type Product struct {
 	Sku                              string       `json:"sku"`
 	Displayname                      string       `json:"displayName"`
@@ -202,7 +211,8 @@ type Product struct {
 	Datasheets                       []Datasheets `json:"datasheets,omitempty"`
 }
 
-type Manufacturerpartnumbersearchreturn struct {
+// ManuFacturerPartNumberSearchReturn is self explainatory
+type ManuFacturerPartNumberSearchReturn struct {
 	Numberofresults int       `json:"numberOfResults"`
 	Products        []Product `json:"products"`
 }
