@@ -112,8 +112,8 @@ func (db *Database) Store(ctx context.Context, items InboundPOST) error {
 			_, err := insertMetaStmt.Exec(
 				&elementID,
 				&spec.Attributelabel,
-				&spec.Attributeunit,
 				&spec.Attributevalue,
+				&spec.Attributeunit,
 			)
 			if err != nil {
 				return err
