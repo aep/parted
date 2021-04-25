@@ -51,36 +51,44 @@
               var self = $(this);
               var selfid = self.attr("id");
 
-              if (selfid == "ordernumber") {
-                $("#search").focus();
+              if (
+                selfid == "ordernumber" ||
+                selfid == "amount-" + selects.length
+              ) {
+                let search = $("#search");
+
+                search.val("");
+                search.focus();
               } else if (selfid == "search") {
                 $.post("/json/partsearch", { search: $("#search").val() }).done(
-                  (data) => {
-                    selects.push(
-                      data.manufacturerPartNumberSearchReturn.products
-                    );
+                  (d) => {
+                    let data = d.manufacturerPartNumberSearchReturn.products;
+                    if (data == null) {
+                      alert("element not found");
+                      return;
+                    }
+
+                    selects.push(data);
                     $("#search-group").append(
                       `
                       <div class="input-group input-group mt-2" aria-label="input group">
-                        <select id="select-${
-                          selects.length - 1
-                        }"class="custom-select" aria-label="select element">
+                        <select id="select-${selects.length}"class="custom-select" aria-label="select element">
                         </select>
 
-                        <input id="amount-${
-                          selects.length - 1
-                        }" type="number" class="form-control ml-2" placeholder="amount" aria-label="select amount">
+                        <input id="amount-${selects.length}" type="number" class="form-control ml-2" placeholder="amount" aria-label="select amount">
                       </div>
                       `
                     );
 
                     selects[selects.length - 1].forEach((value, index) => {
-                      $(`#select-${selects.length - 1}`).append(
+                      $(`#select-${selects.length}`).append(
                         $("<option></option>")
                           .val(index)
                           .html(value.displayName)
                       );
                     });
+
+                    $("#amount-" + selects.length).focus();
                   }
                 );
               }
