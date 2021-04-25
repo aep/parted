@@ -21,7 +21,7 @@
       <form method='post'>
 
         <!-- Email address -->
-        <div class="form-group mb-5">
+        <div class="form-group mb-2">
           <label class='tlabel'>Internal Order Number</label>
           <input id="ordernumber" name="ordernumber" type="ordernumber"
             class="form-control {{if .email_invalid }} is-invalid {{end}}" autofocus=true>
@@ -35,12 +35,19 @@
 
         <br />
 
-        <button class="btn btn-lg btn-block btn-primary mt-2 mb-4 disabled">
+        <button id="confirm-button" class="btn btn-lg btn-block btn-primary mt-2 mb-4 disabled">
           yes
         </button>
 
         <script>
           let select_id = 0;
+          let selected = [];
+          let selects = [];
+
+          function on_select(sel) {
+            selected[sel.name] = selects[sel.name][sel.selectedIndex];
+          }
+
           $('body').on('keydown', 'input, select', function (e) {
             if (e.which === 13) {
               var self = $(this);
@@ -50,26 +57,36 @@
                 $('#search').focus();
               } else if (selfid == "search") {
                 $.post("/json/partsearch", { search: $("#search").val() }).done(
-                  function (data) {
+                  (data) => {
+                    selects[select_id] = data.manufacturerPartNumberSearchReturn.products;
+
                     $("#search-group").append(
                       `
-                      <select id="select${select_id}" class="custom-select">
-                        <option selected></option>
+                      <select id="select-${select_id}" class="custom-select mt-2" onChange="on_select(this)" name="${select_id}">
                       </select>
                       `
                     );
 
-                    data.manufacturerPartNumberSearchReturn.products.forEach((value, index) => {
-                      $(`#select${select_id}`).append($('<option></option>').val(index).html(value.displayName));
+                    selects[select_id].forEach((value, index) => {
+                      $(`#select-${select_id}`).append($('<option></option>').val(index).html(value.displayName));
                     }
                     )
-                    select_id++;
+
+                    select_id++
                   })
               }
 
               return false;
             }
           });
+
+          $('#confirm-button').click((event) => {
+            event.preventDefault();
+            $.post("/inbound", JSON.stringify({
+              order_number: $("#ordernumber").val(),
+              data: selected,
+            })).done((resp) => console.log(resp))
+          })
         </script>
 
       </form>

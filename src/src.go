@@ -2,6 +2,7 @@
 package src
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -68,12 +69,31 @@ func BackEnd(r *gin.Engine) {
 
 		elements, err := searchParams.Search(partNb)
 		if err != nil {
-			c.JSON(500, gin.H{
-				"error": err,
-			})
+			c.Error(err)
 			return
 		}
 
 		c.JSON(200, elements)
 	})
+
+	r.POST("/inbound", func(c *gin.Context) {
+		items := InboundPOST{}
+		err := json.NewDecoder(c.Request.Body).Decode(&items)
+		if err != nil {
+			c.Error(err)
+			c.JSON(404, err)
+			return
+		}
+
+		// TODO: Database call to store the items here
+
+		c.JSON(200, items)
+	})
+}
+
+// InboundPOST represents an inbound post form
+// It contains the order number and the products scanned
+type InboundPOST struct {
+	OrderNb  string     `json:"order_number"`
+	Products []Products `json:"data"`
 }
