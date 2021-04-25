@@ -42,7 +42,6 @@ func (p *keywordSearchParams) Search(term string) (*ManufacturerPartNumberSearch
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	var searchReturn ManufacturerPartNumberSearch
 	if err := json.NewDecoder(resp.Body).Decode(&searchReturn); err != nil {
@@ -56,7 +55,7 @@ func (p *keywordSearchParams) Search(term string) (*ManufacturerPartNumberSearch
 // It's used to produce clean query strings that don't have empty parameters,
 // which could be misinterpreted by apis
 func setIfValid(u url.Values, parameter, value string) {
-	if value != "" && value != "0" {
+	if value != "" {
 		u.Set(parameter, value)
 	}
 }

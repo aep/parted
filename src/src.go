@@ -15,43 +15,55 @@ import (
 	"github.com/foolin/goview/supports/ginview"
 	"github.com/foolin/goview/supports/gorice"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 // Main function, runs all
 func Main() {
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
-
-	router := gin.Default()
-	router.HTMLRender = ginview.Wrap(gorice.NewWithConfig(rice.MustFindBox("../views"), goview.Config{
+	engine := gin.Default()
+	engine.HTMLRender = ginview.Wrap(gorice.NewWithConfig(rice.MustFindBox("../views"), goview.Config{
 		DisableCache: true, // TODO only for debug
 		Master:       "layout.html",
 	}))
-	sour.StaticMount(router, "/static/", rice.MustFindBox("../static"))
+	sour.StaticMount(engine, "/static/", rice.MustFindBox("../static"))
 
-	FrontEnd(router)
-	BackEnd(router)
+	api := API{
+		Params: keywordSearchParams{
+			Client:        &http.Client{Timeout: 5 * time.Second},
+			Field:         "manuPartNum",
+			StoreInfo:     "uk.farnell.com",
+			APIKey:        os.Getenv("API_KEY"),
+			ResponseGroup: "large",
+		},
+		DB:     Connect(),
+		Engine: engine,
+	}
 
-	log.Fatal(router.Run(":8080"))
+	api.FrontEnd()
+	api.BackEnd()
+
+	log.Fatal(engine.Run(":8080"))
+}
+
+type API struct {
+	DB     *Database
+	Params keywordSearchParams
+	Engine *gin.Engine
 }
 
 // FrontEnd runs the front-end
-func FrontEnd(r *gin.Engine) {
-	r.GET("/", func(c *gin.Context) {
+func (api *API) FrontEnd() {
+	api.Engine.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/inbound")
 	})
 
-	r.GET("/inventory", func(c *gin.Context) {
+	api.Engine.GET("/inventory", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "inventory.html", gin.H{
 			"static": sour.Static,
 			"nav":    "inventory",
 		})
 	})
 
-	r.GET("/inbound", func(c *gin.Context) {
+	api.Engine.GET("/inbound", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "inbound.html", gin.H{
 			"static": sour.Static,
 			"nav":    "inbound",
@@ -60,44 +72,34 @@ func FrontEnd(r *gin.Engine) {
 }
 
 // BackEnd initializes and runs the back end
-func BackEnd(r *gin.Engine) {
-	// Building the search param.
-	// Could be passed through gin's context if need there was
-	var searchParams keywordSearchParams = keywordSearchParams{
-		Client:        &http.Client{Timeout: 5 * time.Second},
-		Field:         "manuPartNum",
-		StoreInfo:     "uk.farnell.com",
-		APIKey:        os.Getenv("API_KEY"),
-		ResponseGroup: "inventory",
-	}
+func (api *API) BackEnd() {
+	api.Engine.GET("/json/partsearch/:part", func(c *gin.Context) {
+		partNumber := c.Param("part")
 
-	db := Connect()
-
-	r.POST("/json/partsearch", func(c *gin.Context) {
-		partNb := c.PostForm("search")
-
-		elements, err := searchParams.Search(partNb)
+		elements, err := api.Params.Search(partNumber)
 		if err != nil {
 			c.JSON(404, gin.H{"error": err})
 			return
 		}
 
-		c.JSON(200, elements)
+		c.JSON(200, elements.toItems())
 	})
 
-	r.POST("/inbound", func(c *gin.Context) {
-		i := InboundPOST{}
-		err := json.NewDecoder(c.Request.Body).Decode(&i)
+	api.Engine.POST("/inbound", func(c *gin.Context) {
+		inbound := InboundPOST{}
+		err := json.NewDecoder(c.Request.Body).Decode(&inbound)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err})
 			return
 		}
-		err = db.Store(context.TODO(), i.toItems())
+		err = api.DB.Store(context.TODO(), inbound)
 		if err != nil {
+			c.JSON(500, gin.H{"error": err})
 			log.Println(err)
+			return
 		}
 
-		c.JSON(200, i)
+		c.JSON(200, inbound)
 	})
 }
 
@@ -105,11 +107,5 @@ func BackEnd(r *gin.Engine) {
 // It contains the order number and the products scanned
 type InboundPOST struct {
 	OrderNumber string `json:"order_number"`
-	Data        []Data `json:"data"`
-}
-
-// Data is a single data element from an inbound post
-type Data struct {
-	Product Product `json:"product,omitempty"`
-	Amount  int     `json:"amount"`
+	Data        []Item `json:"data"`
 }

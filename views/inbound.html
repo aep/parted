@@ -45,37 +45,41 @@
 
         <script>
           let selects = [];
-
           $("body").on("keydown", "input, select", function (e) {
             if (e.which === 13) {
               var self = $(this);
               var selfid = self.attr("id");
+              let search = $("#search");
 
               if (
                 selfid == "ordernumber" ||
                 selfid == "amount-" + selects.length
               ) {
-                let search = $("#search");
-
                 search.val("");
                 search.focus();
               } else if (selfid == "search") {
-                $.post("/json/partsearch", { search: $("#search").val() }).done(
-                  (d) => {
-                    let data = d.manufacturerPartNumberSearchReturn.products;
-                    if (data == null) {
+                $.get("/json/partsearch/" + $("#search").val()).always(
+                  (data) => {
+                    if (data.length == 0) {
                       alert("element not found");
+                      search.focus();
                       return;
                     }
 
                     selects.push(data);
+
                     $("#search-group").append(
                       `
-                      <div class="input-group input-group mt-2" aria-label="input group">
+                      <div id="${selects.length}" class="input-group mt-2" aria-label="input group">
                         <select id="select-${selects.length}"class="custom-select" aria-label="select element">
                         </select>
 
                         <input id="amount-${selects.length}" type="number" class="form-control ml-2" placeholder="amount" aria-label="select amount">
+                        <button
+                          value="${selects.length}"
+                          class="deletebtn btn">
+                          x
+                          </button>
                       </div>
                       `
                     );
@@ -84,7 +88,7 @@
                       $(`#select-${selects.length}`).append(
                         $("<option></option>")
                           .val(index)
-                          .html(value.displayName)
+                          .html(value.description)
                       );
                     });
 
@@ -101,11 +105,11 @@
             event.preventDefault();
 
             let selected = [];
-            for (let i = 0; i < selects.length; i++) {
-              selected.push({
-                product: selects[i][$(`#select-${i}`).val()],
-                amount: Number($(`#amount-${i}`).val()),
-              });
+            for (let i = 1; i <= selects.length; i++) {
+              selected.push(selects[i - 1][$(`#select-${i}`).val()]);
+              selected[selected.length - 1].stock = Number(
+                $(`#amount-${i}`).val()
+              );
             }
 
             $.post(
@@ -115,6 +119,11 @@
                 data: selected,
               })
             ).done((resp) => console.log(resp));
+          });
+
+          $(document).on("click", "button.deletebtn", function () {
+            $(this).closest("div").remove();
+            return false;
           });
         </script>
       </form>

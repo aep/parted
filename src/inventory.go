@@ -11,33 +11,31 @@ import (
 
 // Item represents is an item in the inventory
 type Item struct {
-	Manufacturer string
-	PartNb       string
-	Description  string
-	Image        string
-	Category     string
-	Spec         []Attributes
-	Stock        int
-	Used         int
-	OrderNb      string
-	BarcodeID    int
+	Manufacturer string       `json:"manufacturer"`
+	PartNumber   string       `json:"part_number"`
+	Description  string       `json:"description"`
+	Image        string       `json:"image"`
+	Category     string       `json:"category"`
+	Attributes   []Attributes `json:"attributes"`
+	Stock        int          `json:"stock"`
+	Used         int          `json:"used"`
+	OrderNb      string       `json:"order_number"`
+	BarcodeID    int          `json:"barcode_id"`
 }
 
 // toItems is used to map an inbound post to a series of items
-func (i InboundPOST) toItems() []Item {
-	items := make([]Item, 0, len(i.Data))
-	for _, item := range i.Data {
+func (e *ManufacturerPartNumberSearch) toItems() []Item {
+	items := make([]Item, 0, len(e.Manufacturerpartnumbersearchreturn.Products))
+	for _, item := range e.Manufacturerpartnumbersearchreturn.Products {
 		items = append(items, Item{
-			Manufacturer: item.Product.Brandname,
-			PartNb:       item.Product.Translatedmanufacturerpartnumber,
-			Description:  item.Product.Displayname,
-			Image:        item.Product.Image.Vrntpath,
-			Category:     item.Product.Displayname, // ?
-			Stock:        item.Amount,
-			Used:         0,
-			OrderNb:      i.OrderNumber,
-			BarcodeID:    item.Product.Inventorycode,
-			Spec:         item.Product.Attributes,
+			Manufacturer: item.Brandname,
+			PartNumber:   item.Translatedmanufacturerpartnumber,
+			Description:  item.Displayname,
+			Image:        item.Image.Vrntpath + item.Image.Basename,
+			Category:     item.Displayname, // ?
+			Stock:        item.Inv,
+			BarcodeID:    item.Inventorycode,
+			Attributes:   item.Attributes,
 		})
 	}
 
@@ -61,14 +59,17 @@ func Connect() *Database {
 		log.Fatal(err)
 	}
 
-	// so a schema is always available
-	_, _ = db.Exec(schema)
+	database := &Database{DB: db}
 
-	return &Database{DB: db}
+	// so a schema is always available
+	//nolint
+	database.initializeSchema()
+
+	return database
 }
 
 // Store implements Storer
-func (db *Database) Store(ctx context.Context, items []Item) error {
+func (db *Database) Store(ctx context.Context, items InboundPOST) error {
 	tx, err := db.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -87,15 +88,15 @@ func (db *Database) Store(ctx context.Context, items []Item) error {
 		return err
 	}
 
-	for _, item := range items {
+	for _, item := range items.Data {
 		exec, err := insertItemStmt.Exec(
 			&item.Manufacturer,
-			&item.PartNb,
+			&item.PartNumber,
 			&item.Description,
 			&item.Image,
 			&item.Category,
 			&item.Stock,
-			&item.OrderNb,
+			&items.OrderNumber,
 			&item.BarcodeID,
 		)
 		if err != nil {
@@ -107,12 +108,12 @@ func (db *Database) Store(ctx context.Context, items []Item) error {
 			return err
 		}
 
-		for _, s := range item.Spec {
+		for _, spec := range item.Attributes {
 			_, err := insertMetaStmt.Exec(
 				&elementID,
-				&s.Attributelabel,
-				&s.Attributeunit,
-				&s.Attributevalue,
+				&spec.Attributelabel,
+				&spec.Attributeunit,
+				&spec.Attributevalue,
 			)
 			if err != nil {
 				return err
