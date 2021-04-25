@@ -167,7 +167,7 @@ type Datasheets struct {
 	URL         string `json:"url"`
 }
 
-type Products struct {
+type Product struct {
 	Sku                              string       `json:"sku"`
 	Displayname                      string       `json:"displayName"`
 	Productstatus                    string       `json:"productStatus"`
@@ -203,6 +203,6 @@ type Products struct {
 }
 
 type Manufacturerpartnumbersearchreturn struct {
-	Numberofresults int        `json:"numberOfResults"`
-	Products        []Products `json:"products"`
+	Numberofresults int       `json:"numberOfResults"`
+	Products        []Product `json:"products"`
 }

@@ -86,7 +86,6 @@ func BackEnd(r *gin.Engine) {
 		}
 
 		// TODO: Database call to store the items here
-
 		c.JSON(200, items)
 	})
 }
@@ -94,6 +93,11 @@ func BackEnd(r *gin.Engine) {
 // InboundPOST represents an inbound post form
 // It contains the order number and the products scanned
 type InboundPOST struct {
-	OrderNb  string     `json:"order_number"`
-	Products []Products `json:"data"`
+	OrderNumber string `json:"order_number"`
+	Data        []Data `json:"data"`
+}
+
+type Data struct {
+	Product Product `json:"product,omitempty"`
+	Amount  int     `json:"amount"`
 }
