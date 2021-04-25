@@ -2,6 +2,7 @@
 package src
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -58,6 +59,7 @@ func FrontEnd(r *gin.Engine) {
 	})
 }
 
+// BackEnd initializes and runs the back end
 func BackEnd(r *gin.Engine) {
 	// Building the search param.
 	// Could be passed through gin's context if need there was
@@ -68,6 +70,8 @@ func BackEnd(r *gin.Engine) {
 		APIKey:        os.Getenv("API_KEY"),
 		ResponseGroup: "inventory",
 	}
+
+	db := Connect()
 
 	r.POST("/json/partsearch", func(c *gin.Context) {
 		partNb := c.PostForm("search")
@@ -82,15 +86,18 @@ func BackEnd(r *gin.Engine) {
 	})
 
 	r.POST("/inbound", func(c *gin.Context) {
-		items := InboundPOST{}
-		err := json.NewDecoder(c.Request.Body).Decode(&items)
+		i := InboundPOST{}
+		err := json.NewDecoder(c.Request.Body).Decode(&i)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err})
 			return
 		}
+		err = db.Store(context.TODO(), i.toItems())
+		if err != nil {
+			log.Println(err)
+		}
 
-		// TODO: Database call to store the items here
-		c.JSON(200, items)
+		c.JSON(200, i)
 	})
 }
 
