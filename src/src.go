@@ -101,6 +101,16 @@ func (api *API) BackEnd() {
 
 		c.JSON(200, inbound)
 	})
+
+	api.Engine.GET("/json/inventory", func(c *gin.Context) {
+		items, err := api.DB.ReadAll()
+		if err != nil {
+			c.JSON(500, gin.H{"error": err})
+			return
+		}
+
+		c.JSON(200, &items)
+	})
 }
 
 // InboundPOST represents an inbound post form

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"strings"
 
 	// database driver initialization
 	_ "github.com/mattn/go-sqlite3"
@@ -11,6 +12,7 @@ import (
 
 // Item represents is an item in the inventory
 type Item struct {
+	ID           int          `json:"id"`
 	Manufacturer string       `json:"manufacturer"`
 	PartNumber   string       `json:"part_number"`
 	Description  string       `json:"description"`
@@ -19,7 +21,7 @@ type Item struct {
 	Attributes   []Attributes `json:"attributes"`
 	Stock        int          `json:"stock"`
 	Used         int          `json:"used"`
-	OrderNb      string       `json:"order_number"`
+	OrderNumber  string       `json:"order_number"`
 	BarcodeID    int          `json:"barcode_id"`
 }
 
@@ -134,25 +136,78 @@ func (db *Database) initializeSchema() error {
 	return err
 }
 
+// ReadAll the items
+func (db *Database) ReadAll() ([]Item, error) {
+	rows, err := db.DB.Query(GetAllItems)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Item
+	for rows.Next() {
+		var item Item
+		var Values string
+		var Units string
+		var Labels string
+		if err := rows.Scan(
+			&item.ID,
+			&item.Manufacturer,
+			&item.PartNumber,
+			&item.Description,
+			&item.Image,
+			&item.Category,
+			&item.Stock,
+			&item.Used,
+			&item.OrderNumber,
+			&item.BarcodeID,
+			&Values,
+			&Units,
+			&Labels,
+		); err != nil {
+			return nil, err
+		}
+
+		v := strings.Split(Values, ";;")
+		u := strings.Split(Units, ";;")
+		l := strings.Split(Labels, ";;")
+
+		for i := range l {
+			item.Attributes = append(item.Attributes, Attributes{
+				Attributelabel: l[i],
+				Attributevalue: v[i],
+				Attributeunit:  u[i],
+			})
+		}
+		items = append(items, item)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const schema = `
 CREATE TABLE inventory (
     id INTEGER NOT NULL PRIMARY KEY,
-    manufacturer VARCHAR,
-    part_number VARCHAR,
-    description VARCHAR,
-    image VARCHAR,
-    category VARCHAR,
-    stock INTEGER,
-    used INTEGER,
-    order_number VARCHAR,
-    barcode_id INTEGER
+    manufacturer VARCHAR NOT NULL DEFAULT '',
+    part_number VARCHAR NOT NULL DEFAULT '',
+    description VARCHAR NOT NULL DEFAULT '',
+    image VARCHAR NOT NULL DEFAULT '',
+    category VARCHAR NOT NULL DEFAULT '',
+    stock INTEGER NOT NULL DEFAULT 0,
+    used INTEGER NOT NULL DEFAULT 0,
+    order_number VARCHAR NOT NULL DEFAULT '',
+    barcode_id INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE specifications (
-    id_element INTEGER,
-    label VARCHAR,
-    value VARCHAR,
-    unit VARCHAR,
+    id_element INTEGER NOT NULL,
+    label VARCHAR NOT NULL DEFAULT '',
+    value VARCHAR NOT NULL DEFAULT '',
+    unit VARCHAR NOT NULL DEFAULT '',
     FOREIGN KEY(id_element) REFERENCES inventory(id)
 );
 `
@@ -174,4 +229,31 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 const insertAttr = `
 INSERT INTO specifications (id_element, label, value, unit)
 VALUES (?, ?, ?, ?);
+`
+
+const GetAllItems = `
+SELECT id,
+       manufacturer,
+       part_number,
+       description,
+       image,
+       category,
+       stock,
+       used,
+       order_number,
+       barcode_id,
+       "values",
+       units,
+       labels
+FROM inventory
+LEFT JOIN
+(
+	SELECT
+    id_element,
+	group_concat(specifications.label, ';;') as "labels",
+	group_concat( specifications.value, ';;') as "values",
+	group_concat( specifications.unit, ';;') as "units"
+FROM specifications
+GROUP BY id_element
+) as s on s.id_element = inventory.id;
 `
