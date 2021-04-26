@@ -1,4 +1,5 @@
-package src
+// Package elem14 handles interactions with the element14 api
+package elem14
 
 import (
 	"encoding/json"
@@ -7,27 +8,27 @@ import (
 	"strconv"
 )
 
-// Searches the API using the search term.
+// Search the API using the search term.
 // configure using the passed struct, see the docs here
 // https://partner.element14.com/docs/Product_Search_API_REST__Description#queryparameters
-func (p *keywordSearchParams) Search(term string) (*ManufacturerPartNumberSearch, error) {
+func (conf *Configuration) Search(term string) (*ManufacturerPartNumberSearch, error) {
 	uVals := url.Values{}
 
 	// mandatory
-	uVals.Set("callInfo.apiKey", p.APIKey)
-	uVals.Set("term", p.Field+":"+term)
-	uVals.Set("storeInfo.id", p.StoreInfo)
+	uVals.Set("callInfo.apiKey", conf.APIKey)
+	uVals.Set("term", conf.Field+":"+term)
+	uVals.Set("storeInfo.id", conf.StoreInfo)
 	uVals.Set("callInfo.responseDataFormat", "JSON")
 
 	// optional
-	setIfValid(uVals, "resultsSettings.numberOfResults", strconv.Itoa(p.ResultCount))
-	setIfValid(uVals, "resultsSettings.offset", strconv.Itoa(p.Resultoffset))
-	setIfValid(uVals, "callInfo.callback", p.Callback)
-	setIfValid(uVals, "userInfo.signature", p.Signature)
-	setIfValid(uVals, "userInfo.timestamp", p.Timestamp)
-	setIfValid(uVals, "userInfo.customerId", p.CustomerID)
-	setIfValid(uVals, "resultsSettings.refinements.filters", p.Filters)
-	setIfValid(uVals, "resultsSettings.responseGroup", p.ResponseGroup)
+	setIfValid(uVals, "resultsSettings.numberOfResults", strconv.Itoa(conf.ResultCount))
+	setIfValid(uVals, "resultsSettings.offset", strconv.Itoa(conf.Resultoffset))
+	setIfValid(uVals, "callInfo.callback", conf.Callback)
+	setIfValid(uVals, "userInfo.signature", conf.Signature)
+	setIfValid(uVals, "userInfo.timestamp", conf.Timestamp)
+	setIfValid(uVals, "userInfo.customerId", conf.CustomerID)
+	setIfValid(uVals, "resultsSettings.refinements.filters", conf.Filters)
+	setIfValid(uVals, "resultsSettings.responseGroup", conf.ResponseGroup)
 
 	req, err := http.NewRequest(
 		http.MethodGet,
@@ -38,7 +39,7 @@ func (p *keywordSearchParams) Search(term string) (*ManufacturerPartNumberSearch
 		return nil, err
 	}
 
-	resp, err := p.Client.Do(req)
+	resp, err := conf.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -60,9 +61,9 @@ func setIfValid(u url.Values, parameter, value string) {
 	}
 }
 
-// keywordSearchParams represent the possible parameters of the query
+// Configuration represent the possible parameters of the query
 // see https://partner.element14.com/docs/Product_Search_API_REST__Description#queryparameters
-type keywordSearchParams struct {
+type Configuration struct {
 	// pass in your custom client, don't forget the timeout
 	Client *http.Client
 
@@ -214,4 +215,36 @@ type Product struct {
 type ManuFacturerPartNumberSearchReturn struct {
 	Numberofresults int       `json:"numberOfResults"`
 	Products        []Product `json:"products"`
+}
+
+// ToItems is used to map an inbound post to a series of items
+func (e *ManufacturerPartNumberSearch) ToItems() []Item {
+	items := make([]Item, 0, len(e.Manufacturerpartnumbersearchreturn.Products))
+	for _, item := range e.Manufacturerpartnumbersearchreturn.Products {
+		items = append(items, Item{
+			Manufacturer: item.Brandname,
+			PartNumber:   item.Translatedmanufacturerpartnumber,
+			Description:  item.Displayname,
+			Image:        item.Image.Vrntpath + item.Image.Basename,
+			Stock:        item.Inv,
+			BarcodeID:    item.Inventorycode,
+			Attributes:   item.Attributes,
+		})
+	}
+
+	return items
+}
+
+// Item represents is an item in the inventory
+type Item struct {
+	ID           int          `json:"id"`
+	Manufacturer string       `json:"manufacturer"`
+	PartNumber   string       `json:"part_number"`
+	Description  string       `json:"description"`
+	Image        string       `json:"image"`
+	Attributes   []Attributes `json:"attributes"`
+	Stock        int          `json:"stock"`
+	Used         int          `json:"used"`
+	OrderNumber  string       `json:"order_number"`
+	BarcodeID    int          `json:"barcode_id"`
 }
