@@ -12,7 +12,7 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		panic(err)
+		log.Fatalln("could not load env: ", err)
 	}
 
 	err = checkRequiredEnv(map[string]struct{}{

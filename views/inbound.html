@@ -10,7 +10,8 @@
 
       <br />
 
-      <form method="post">
+      <div id="alerts"></div>
+      <form method="POST">
         <!-- Email address -->
         <div class="form-group mb-2">
           <label class="tlabel">Internal Order Number</label>
@@ -60,8 +61,17 @@
               } else if (selfid == "search") {
                 $.get("/json/partsearch/" + $("#search").val()).always(
                   (data) => {
-                    if (data.length == 0) {
-                      alert("element not found");
+                    if (!data.length) {
+                      $("#alerts")
+                        .html(
+                          `
+                  <div class="alert alert-danger" role="alert">
+                    Item not found
+                  </div>
+                        `
+                        )
+                        .fadeIn();
+                      $("#alerts").delay(2500).fadeOut();
                       search.focus();
                       return;
                     }
@@ -104,7 +114,30 @@
           $("#confirm-button").click((event) => {
             event.preventDefault();
 
+            $("#alerts")
+              .html(
+                `
+                <div class="alert alert-info" role="alert">
+                  Processing the items
+                </div>
+                `
+              )
+              .fadeIn();
+
             let selected = [];
+            if (!selects[0]) {
+              $("#alerts")
+                .html(
+                  `
+                <div class="alert alert-danger" role="alert">
+                  There was an error processing items!
+                </div>
+                `
+                )
+                .fadeIn();
+              $("#alerts").delay(2500).fadeOut();
+              return;
+            }
             for (let i = 1; i <= selects.length; i++) {
               selected.push(selects[i - 1][$(`#select-${i}`).val()]);
               selected[selected.length - 1].stock = Number(
@@ -118,7 +151,30 @@
                 order_number: $("#ordernumber").val(),
                 data: selected,
               })
-            ).done((resp) => console.log(resp));
+            ).done((resp) => {
+              if (resp.status != 200) {
+                $("#alerts")
+                  .html(
+                    `
+                <div class="alert alert-error" role="alert">
+                  There was an error processing items!
+                </div>
+                `
+                  )
+                  .fadeIn();
+                $("#alerts").delay(2500).fadeOut();
+              }
+              $("#alerts")
+                .html(
+                  `
+                <div class="alert alert-success" role="alert">
+                  Items processed!
+                </div>
+                `
+                )
+                .fadeIn();
+              $("#alerts").delay(2500).fadeOut();
+            });
           });
 
           $(document).on("click", "button.deletebtn", function () {

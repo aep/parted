@@ -17,7 +17,6 @@ type Item struct {
 	PartNumber   string       `json:"part_number"`
 	Description  string       `json:"description"`
 	Image        string       `json:"image"`
-	Category     string       `json:"category"`
 	Attributes   []Attributes `json:"attributes"`
 	Stock        int          `json:"stock"`
 	Used         int          `json:"used"`
@@ -34,7 +33,6 @@ func (e *ManufacturerPartNumberSearch) toItems() []Item {
 			PartNumber:   item.Translatedmanufacturerpartnumber,
 			Description:  item.Displayname,
 			Image:        item.Image.Vrntpath + item.Image.Basename,
-			Category:     item.Displayname, // ?
 			Stock:        item.Inv,
 			BarcodeID:    item.Inventorycode,
 			Attributes:   item.Attributes,
@@ -96,7 +94,6 @@ func (db *Database) Store(ctx context.Context, items InboundPOST) error {
 			&item.PartNumber,
 			&item.Description,
 			&item.Image,
-			&item.Category,
 			&item.Stock,
 			&items.OrderNumber,
 			&item.BarcodeID,
@@ -155,7 +152,6 @@ func (db *Database) ReadAll() ([]Item, error) {
 			&item.PartNumber,
 			&item.Description,
 			&item.Image,
-			&item.Category,
 			&item.Stock,
 			&item.Used,
 			&item.OrderNumber,
@@ -196,7 +192,6 @@ CREATE TABLE inventory (
     part_number VARCHAR NOT NULL DEFAULT '',
     description VARCHAR NOT NULL DEFAULT '',
     image VARCHAR NOT NULL DEFAULT '',
-    category VARCHAR NOT NULL DEFAULT '',
     stock INTEGER NOT NULL DEFAULT 0,
     used INTEGER NOT NULL DEFAULT 0,
     order_number VARCHAR NOT NULL DEFAULT '',
@@ -218,12 +213,11 @@ INSERT INTO inventory (
 	part_number,
 	description,
 	image,
-	category,
 	stock,
 	order_number,
 	barcode_id
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?, ?);
 `
 
 const insertAttr = `
@@ -237,7 +231,6 @@ SELECT id,
        part_number,
        description,
        image,
-       category,
        stock,
        used,
        order_number,
