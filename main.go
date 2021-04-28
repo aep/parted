@@ -15,20 +15,20 @@ func main() {
 		log.Fatalln("could not load env: ", err)
 	}
 
-	err = checkRequiredEnv(map[string]struct{}{
-		"API_KEY": {},
+	err = checkRequiredEnv([]string{
+		"API_KEY",
 	})
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	src.Main()
+	src.ListenAndServe()
 }
 
-func checkRequiredEnv(req map[string]struct{}) error {
-	for key := range req {
-		if _, ok := os.LookupEnv(key); !ok {
-			return fmt.Errorf("missing required env variable, %s", key)
+func checkRequiredEnv(required []string) error {
+	for _, req := range required {
+		if _, ok := os.LookupEnv(req); !ok {
+			return fmt.Errorf("missing required env variable, %s", req)
 		}
 	}
 	return nil

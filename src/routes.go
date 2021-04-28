@@ -7,22 +7,25 @@ import (
 	"github.com/aep/parted/src/api"
 )
 
-// Main function, runs all
-func Main() {
+// ListenAndServe function, runs all.
+// returns a blocking function
+func ListenAndServe() {
 	a := api.New()
 
 	// Front
 	a.Engine.GET("/", api.ToInbound)
 	a.Engine.GET("/inventory", api.GetInventory)
 	a.Engine.GET("/inbound", api.GetInbound)
+	a.Engine.GET("/inbound/:inbound", a.GetInboundByNumber)
 
 	// Back
+	a.Engine.POST("/inbound/:inbound", a.ModifyInbound)
 	a.Engine.POST("/inbound", a.CreateInbound)
 	a.Engine.GET("/json/partsearch/:part", a.SearchPart)
 	a.Engine.GET("/json/inventory", a.GetJSONInventory)
 	a.Engine.GET("/json/inbound/:inbound", a.GetInboundItem)
 
-	if err := a.Engine.Run(":8080"); err != nil {
+	if err := a.Engine.Run(); err != nil {
 		log.Fatalln(err)
 	}
 }

@@ -4,7 +4,7 @@ import "github.com/aep/parted/src/elem14"
 
 // GetInboundOrder returns the data from a single order
 func (db *Database) GetInboundOrder(orderNumber string) ([]elem14.Item, error) {
-	rows, err := db.DB.Query(SQLReadItems, orderNumber)
+	rows, err := db.DB.Query(SQLReadInboud, orderNumber)
 	if err != nil {
 		return nil, err
 	}
@@ -39,4 +39,94 @@ func (db *Database) GetInboundOrder(orderNumber string) ([]elem14.Item, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+// UpdateInbound delete existing items and insert the new ones
+func (db *Database) UpdateInbound(items []elem14.Item, orderNumber string) error {
+	tx, err := db.DB.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	IDs, err := func() ([]int, error) {
+		rows, err := tx.Query(SQLidsFromInbound, orderNumber)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+		var IDs []int
+		for rows.Next() {
+			var ID int
+			if err := rows.Scan(&ID); err != nil {
+				return nil, err
+			}
+
+			IDs = append(IDs, ID)
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
+		return IDs, nil
+	}()
+	if err != nil {
+		return err
+	}
+
+	deleteAttrSmt, err := tx.Prepare(SQLInsertItem)
+	if err != nil {
+		return err
+	}
+
+	for _, id := range IDs {
+		if _, err := deleteAttrSmt.Exec(id); err != nil {
+			return err
+		}
+	}
+
+	insertItemStmt, err := tx.Prepare(SQLInsertItem)
+	if err != nil {
+		return err
+	}
+
+	insertMetaStmt, err := tx.Prepare(SQLInsertAttr)
+	if err != nil {
+		return err
+	}
+
+	for _, item := range items {
+		exec, err := insertItemStmt.Exec(
+			&item.Manufacturer,
+			&item.PartNumber,
+			&item.Description,
+			&item.Image,
+			&item.Stock,
+			&orderNumber,
+			&item.BarcodeID,
+		)
+		if err != nil {
+			return err
+		}
+
+		elementID, err := exec.LastInsertId()
+		if err != nil {
+			return err
+		}
+
+		for _, spec := range item.Attributes {
+			_, err := insertMetaStmt.Exec(
+				&elementID,
+				&spec.Attributelabel,
+				&spec.Attributevalue,
+				&spec.Attributeunit,
+			)
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+
+	return tx.Commit()
 }

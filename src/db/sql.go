@@ -24,7 +24,7 @@ LEFT JOIN
 FROM specifications
 GROUP BY id_element
 ) as s on s.id_element = inventory.id
- WHERE order_number = ?;
+ WHERE inventory.order_number = ?;
 `
 
 const SQLSchema = `
@@ -91,4 +91,18 @@ LEFT JOIN
 FROM specifications
 GROUP BY id_element
 ) as s on s.id_element = inventory.id;
+`
+
+const DeleteInbound = `
+DELETE FROM inventory WHERE inventory.order_number = ?
+RETURNING id;
+`
+
+const SQLDeleteAttr = `
+DELETE FROM specifications WHERE id_element = ?;
+`
+
+const SQLidsFromInbound = `
+SELECT id
+FROM inventory WHERE order_number = ?;
 `
