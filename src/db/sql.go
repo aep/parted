@@ -93,7 +93,7 @@ GROUP BY id_element
 ) as s on s.id_element = inventory.id;
 `
 
-const DeleteInbound = `
+const SQLDeleteInbound = `
 DELETE FROM inventory WHERE inventory.order_number = ?
 RETURNING id;
 `

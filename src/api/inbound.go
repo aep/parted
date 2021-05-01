@@ -6,7 +6,11 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
+	"github.com/aep/parted/src/cache"
 	"github.com/aep/parted/src/elem14"
 	"github.com/aep/sour"
 	"github.com/gin-gonic/gin"
@@ -28,12 +32,18 @@ func GetInbound(c *gin.Context) {
 // GetInboundByNumber returns the concerned inbound html page
 func (api *API) GetInboundByNumber(c *gin.Context) {
 	inbound := c.Param("inbound")
-	log.Println(inbound)
 
 	items, err := api.DB.GetInboundOrder(inbound)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err})
 		return
+	}
+
+	for _, i := range items {
+		api.Cache.Store(strings.Join(strings.Fields(i.Description), " "), &cache.Item{
+			ExpiryTime: time.Now().Add(2 * time.Hour),
+			Data:       i,
+		})
 	}
 
 	c.HTML(http.StatusOK, "inbound-by-id.html", gin.H{
@@ -48,22 +58,45 @@ func (api *API) GetInboundByNumber(c *gin.Context) {
 func (api *API) ModifyInbound(c *gin.Context) {
 	inboundNbr := c.Param("inbound")
 
-	inbound := InboundPOST{}
-	err := json.NewDecoder(c.Request.Body).Decode(&inbound)
-	if err != nil {
-		c.JSON(500, gin.H{"error": err})
+	items := c.PostFormArray("item")
+	amounts := c.PostFormArray("amount")
+	if len(items) != len(amounts) {
+		c.JSON(400, inboundNbr)
 		return
 	}
 
-	log.Println(inbound)
+	inbound := InboundPOST{
+		OrderNumber: inboundNbr,
+		Data:        make([]elem14.Item, 0, len(items)),
+	}
+	for i := range items {
+		it := api.Cache.Retrieve(items[i])
+		if it == nil {
+			c.JSON(400, "invalid item stored")
+			return
+		}
+		item, ok := it.Data.(elem14.Item)
+		if !ok {
+			c.JSON(400, "invalid item stored")
+			return
+		}
 
-	err = api.DB.UpdateInbound(inbound.Data, inboundNbr)
+		var err error
+		item.Stock, err = strconv.Atoi(amounts[i])
+		if err != nil {
+			c.JSON(400, "invalid amount field ")
+			return
+		}
+		inbound.Data = append(inbound.Data, item)
+	}
+
+	err := api.DB.UpdateInbound(inbound.Data, inbound.OrderNumber)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err})
+		c.JSON(400, "error occured: "+err.Error())
 		return
 	}
 
-	c.JSON(200, inboundNbr)
+	c.JSON(200, inbound)
 }
 
 // CreateInbound creates an inbound item and stores it inside the database

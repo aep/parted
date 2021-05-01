@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 // Search the API using the search term.
@@ -224,7 +225,7 @@ func (e *ManufacturerPartNumberSearch) ToItems() []Item {
 		items = append(items, Item{
 			Manufacturer: item.Brandname,
 			PartNumber:   item.Translatedmanufacturerpartnumber,
-			Description:  item.Displayname,
+			Description:  strings.Join(strings.Fields(item.Displayname), " "),
 			Image:        item.Image.Vrntpath + item.Image.Basename,
 			Stock:        item.Inv,
 			BarcodeID:    item.Inventorycode,

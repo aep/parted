@@ -1,6 +1,8 @@
 package db
 
-import "github.com/aep/parted/src/elem14"
+import (
+	"github.com/aep/parted/src/elem14"
+)
 
 // GetInboundOrder returns the data from a single order
 func (db *Database) GetInboundOrder(orderNumber string) ([]elem14.Item, error) {
@@ -74,7 +76,7 @@ func (db *Database) UpdateInbound(items []elem14.Item, orderNumber string) error
 		return err
 	}
 
-	deleteAttrSmt, err := tx.Prepare(SQLInsertItem)
+	deleteAttrSmt, err := tx.Prepare(SQLDeleteAttr)
 	if err != nil {
 		return err
 	}
@@ -83,6 +85,10 @@ func (db *Database) UpdateInbound(items []elem14.Item, orderNumber string) error
 		if _, err := deleteAttrSmt.Exec(id); err != nil {
 			return err
 		}
+	}
+
+	if _, err := tx.Exec(SQLDeleteInbound, orderNumber); err != nil {
+		return err
 	}
 
 	insertItemStmt, err := tx.Prepare(SQLInsertItem)

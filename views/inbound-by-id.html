@@ -3,15 +3,15 @@
 <div class="container">
   <div class="row justify-content-center">
     <div class="col-12 col-md-5 col-xl-4 my-5">
-      <h1 class="mb-2">Inbound</h1>
+      <h1 class="mb-2">Inbound {{.Inbound}}</h1>
       <p class="text-muted mb-4">Adding parts to inventory</p>
       <br />
       <div id="alerts"></div>
-      <form method="post">
+      <form method="post" id="item-form">
         <div class="form-group mb-2">
           <label class="tlabel">Internal Order Number</label>
-          <input id="ordernumber" name="ordernumber" type="ordernumber"
-            class="form-control {{if .email_invalid }} is-invalid {{end}}" autofocus="true" value="{{.Inbound}}" />
+          <p id="ordernumber" name="ordernumber" type="ordernumber"
+            class="form-control" autofocus="true">{{.Inbound}}</p>
         </div>
         <div class="form-group mb-2" id="search-group">
           <label class="tlabel">Search</label>
@@ -19,13 +19,13 @@
             autofocus="true" />
         </div>
         {{range .Items}}
-        <div id="{{.ID}}" class="input-group mt-2" aria-label="input group">
-          <select id="select-{{.ID}}" class="custom-select" aria-label="select element">
+        <div id="{{.ID}}" class="input-group mt-2" aria-label="input group" name="{{.ID}}">
+          <select id="select-{{.ID}}" class="custom-select" aria-label="select element" name="item">
             <option selected>{{.Description}}</option>
           </select>
 
           <input id="amount-{{.ID}}" type="number" class="form-control ml-2" placeholder="amount"
-            aria-label="select amount" value="{{.Stock}}" />
+            aria-label="select amount" value="{{.Stock}}" name="amount" />
           <button value="{{.ID}}" class="deletebtn btn">x</button>
         </div>
         {{end}}
@@ -37,149 +37,115 @@
 
 
     <script>
-      let selects = [];
-      $.get("/json/inbound/" + $("#ordernumber").val()).always((data) => {
-        data.forEach((i) => selects.push(i));
-      }
-      )
-      $("body").on("keydown", "input, select", function (e) {
-        if (e.which === 13) {
-          var self = $(this);
-          var selfid = self.attr("id");
-          let search = $("#search");
+          let selects = [];
+          $("body").on("keydown", "input, select", function (e) {
+            if (e.which === 13) {
+              var self = $(this);
+              var selfid = self.attr("id");
+              let search = $("#search");
 
-          if (
-            selfid == "ordernumber" ||
-            selfid == "amount-" + selects.length
-          ) {
-            search.val("");
-            search.focus();
-          } else if (selfid == "search") {
-            $.get("/json/partsearch/" + $("#search").val()).always(
-              (data) => {
-                if (!data.length) {
-                  $("#alerts")
-                    .html(
+              if (
+                selfid == "ordernumber" ||
+                selfid == "amount-" + selects.length
+              ) {
+                search.val("");
+                search.focus();
+              } else if (selfid == "search") {
+                $.get("/json/partsearch/" + $("#search").val()).always(
+                  (data) => {
+                    if (!data.length) {
+                      $("#alerts")
+                        .html(
+                          `
+                  <div class="alert alert-danger" role="alert">
+                    Item not found
+                  </div>
+                        `
+                        )
+                        .fadeIn();
+                      $("#alerts").delay(2500).fadeOut();
+                      search.focus();
+                      return;
+                    }
+
+                    selects.push(data);
+
+                    $("#search-group").append(
                       `
-      <div class="alert alert-danger" role="alert">
-        Item not found
-      </div>
-            `
-                    )
-                    .fadeIn();
-                  $("#alerts").delay(2500).fadeOut();
-                  search.focus();
-                  return;
-                }
+                      <div class="input-group mt-2">
+                        <select
+                        id="select-${selects.length}"
+                        class="custom-select"
+                        aria-label="select element"
+                        name="item"
+                        </select>
 
-                selects.push(data);
+                        <input
+                        id="amount-${selects.length}"
+                        type="number"
+                        class="form-control ml-2"
+                        placeholder="amount" 
+                        aria-label="select amount"
+                        name="amount"
+                        >
+                        <button
+                          value="${selects.length}"
+                          class="deletebtn btn">
+                          x
+                        </button>
+                        <div/>
+                      `
+                    );
 
-                $("#search-group").append(
-                  `
-          <div id="${selects.length}" class="input-group mt-2" aria-label="input group">
-            <select id="select-${selects.length}"class="custom-select" aria-label="select element">
-            </select>
+                    selects[selects.length - 1].forEach((value, index) => {
+                      $(`#select-${selects.length}`).append(
+                        $("<option></option>")
+                          .val(value.description)
+                          .html(value.description)
+                      );
+                    });
 
-            <input id="amount-${selects.length}" type="number" class="form-control ml-2" placeholder="amount" aria-label="select amount">
-            <button
-              value="${selects.length}"
-              class="deletebtn btn">
-              x
-              </button>
-          </div>
-          `
+                    $("#amount-" + selects.length).focus();
+                  }
                 );
-
-                selects[selects.length - 1].forEach((value, index) => {
-                  $(`#select-${selects.length}`).append(
-                    $("<option></option>")
-                      .val(index)
-                      .html(value.description)
-                  );
-                });
-
-                $("#amount-" + selects.length).focus();
               }
-            );
-          }
 
-          return false;
-        }
-      });
+              return false;
+            }
+          });
 
-      $("#confirm-button").click((event) => {
-        event.preventDefault();
+          $("#confirm-button").click((e) => {
+            e.preventDefault();
 
-        $("#alerts")
-          .html(
-            `
-    <div class="alert alert-info" role="alert">
-      Processing the items
-    </div>
-    `
-          )
-          .fadeIn();
-
-        let selected = [];
-        if (!selects[0]) {
-          $("#alerts")
-            .html(
-              `
-    <div class="alert alert-danger" role="alert">
-      There was an error processing items!
-    </div>
-    `
-            )
-            .fadeIn();
-          $("#alerts").delay(2500).fadeOut();
-          return;
-        }
-        for (let i = 1; i <= selects.length; i++) {
-          selected.push(selects[i - 1][$(`#select-${i}`).val()]);
-          selected[selected.length - 1] = {
-            ...selected[selected.length - 1],
-            stock: Number(
-            $(`#amount-${i}`).val()
-          ),
-          }
-        }
-
-        $.post(
-          "/inbound/"+$("#ordernumber").val(),
-          JSON.stringify({
-            order_number: $("#ordernumber").val(),
-            data: selected,
-          })
-        ).done((resp) => {
-          if (resp.status != 200) {
             $("#alerts")
               .html(
                 `
-    <div class="alert alert-error" role="alert">
-      There was an error processing items!
-    </div>
-    `
+                <div class="alert alert-info" role="alert">
+                  Processing the items
+                </div>
+                `
               )
               .fadeIn();
-            $("#alerts").delay(2500).fadeOut();
-          }
-          $("#alerts")
-            .html(
-              `
-    <div class="alert alert-success" role="alert">
-      Items processed!
-    </div>
-    `
-            )
-            .fadeIn();
-          $("#alerts").delay(2500).fadeOut();
-        });
-      });
 
-      $(document).on("click", "button.deletebtn", function () {
-        $(this).closest("div").remove();
-        return false;
-      });
+              $.post("/inbound/"+$('#ordernumber').html(), $( "#item-form" ).serialize()).done(() => {
+                $("#alerts")
+                .html(
+                  `
+                  <div class="alert alert-success" role="alert">
+                    Items processed!
+                    </div>
+                    `
+                    )
+                    .fadeIn()
+                    $("#alerts").delay(2500).fadeOut();
+                  }
+              )
+          });
+
+          $(document).on("click", "button.deletebtn", (e) => {
+            $(this).closest("div").remove();
+            return false;
+          });
     </script>
     </form>
   </div>

@@ -1,6 +1,11 @@
 package api
 
-import "github.com/gin-gonic/gin"
+import (
+	"time"
+
+	"github.com/aep/parted/src/cache"
+	"github.com/gin-gonic/gin"
+)
 
 // SearchPart searches for a part
 func (api *API) SearchPart(c *gin.Context) {
@@ -12,5 +17,14 @@ func (api *API) SearchPart(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, elements.ToItems())
+	items := elements.ToItems()
+
+	for _, i := range items {
+		api.Cache.Store(i.Description, &cache.Item{
+			ExpiryTime: time.Now().Add(30 * time.Minute),
+			Data:       i,
+		})
+	}
+
+	c.JSON(200, items)
 }

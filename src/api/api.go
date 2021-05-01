@@ -6,6 +6,7 @@ import (
 	"time"
 
 	rice "github.com/GeertJohan/go.rice"
+	"github.com/aep/parted/src/cache"
 	"github.com/aep/parted/src/db"
 	"github.com/aep/parted/src/elem14"
 	"github.com/aep/sour"
@@ -20,6 +21,7 @@ type API struct {
 	DB     *db.Database
 	Params elem14.Configuration
 	Engine *gin.Engine
+	Cache  *cache.Store
 }
 
 func New() *API {
@@ -40,5 +42,6 @@ func New() *API {
 		},
 		DB:     db.Connect(),
 		Engine: engine,
+		Cache:  cache.New(5*time.Minute, nil),
 	}
 }
