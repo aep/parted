@@ -11,7 +11,7 @@
       <br />
 
       <div id="alerts"></div>
-      <form method="">
+      <form method="post" id="item-form">
         <!-- Email address -->
         <div class="form-group mb-2">
           <label class="tlabel">Internal Order Number</label>
@@ -65,10 +65,10 @@
                       $("#alerts")
                         .html(
                           `
-                          <div class="alert alert-danger" role="alert">
-                            Item not found
-                          </div>
-                          `
+                  <div class="alert alert-danger" role="alert">
+                    Item not found
+                  </div>
+                        `
                         )
                         .fadeIn();
                       $("#alerts").delay(2500).fadeOut();
@@ -92,12 +92,11 @@
                         id="amount-${selects.length}"
                         type="number"
                         class="form-control ml-2"
-                        placeholder="amount" 
+                        placeholder="amount"
                         aria-label="select amount"
                         name="amount"
                         >
                         <button
-                          value="${selects.length}"
                           class="deletebtn btn">
                           x
                         </button>
@@ -108,7 +107,7 @@
                     selects[selects.length - 1].forEach((value, index) => {
                       $(`#select-${selects.length}`).append(
                         $("<option></option>")
-                          .val(index)
+                          .val(value.description)
                           .html(value.description)
                       );
                     });
@@ -122,8 +121,8 @@
             }
           });
 
-          $("#confirm-button").click((event) => {
-            event.preventDefault();
+          $("#confirm-button").click((e) => {
+            e.preventDefault();
 
             $("#alerts")
               .html(
@@ -135,62 +134,26 @@
               )
               .fadeIn();
 
-            let selected = [];
-            if (!selects[0]) {
-              $("#alerts")
-                .html(
-                  `
-                <div class="alert alert-danger" role="alert">
-                  There was an error processing items!
-                </div>
-                `
-                )
-                .fadeIn();
-              $("#alerts").delay(2500).fadeOut();
-              return;
-            }
-            for (let i = 1; i <= selects.length; i++) {
-              selected.push(selects[i - 1][$(`#select-${i}`).val()]);
-              selected[selected.length - 1].stock = Number(
-                $(`#amount-${i}`).val()
-              );
-            }
-
             $.post(
-              "/inbound",
-              JSON.stringify({
-                order_number: $("#ordernumber").val(),
-                data: selected,
-              })
-            ).done((resp) => {
-              if (resp.status != 200) {
-                $("#alerts")
-                  .html(
-                    `
-                <div class="alert alert-error" role="alert">
-                  There was an error processing items!
-                </div>
-                `
-                  )
-                  .fadeIn();
-                $("#alerts").delay(2500).fadeOut();
-              }
+              "/inbound/" + $("#ordernumber").html(),
+              $("#item-form").serialize()
+            ).done(() => {
               $("#alerts")
                 .html(
                   `
-                <div class="alert alert-success" role="alert">
-                  Items processed!
-                </div>
-                `
+                  <div class="alert alert-success" role="alert">
+                    Items processed!
+                    </div>
+                    `
                 )
                 .fadeIn();
               $("#alerts").delay(2500).fadeOut();
-              window.location.replace("/inbound/" + $("#ordernumber").val());
             });
+            window.location.replace("/inbound/" + $("#ordernumber").val());
           });
 
           $(document).on("click", "button.deletebtn", (e) => {
-            $(this).closest("div").remove();
+            e.target.closest("div.input-group").remove();
             return false;
           });
         </script>

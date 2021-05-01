@@ -52,41 +52,6 @@ func (db *Database) UpdateInbound(items []elem14.Item, orderNumber string) error
 
 	defer tx.Rollback()
 
-	IDs, err := func() ([]int, error) {
-		rows, err := tx.Query(SQLidsFromInbound, orderNumber)
-		if err != nil {
-			return nil, err
-		}
-		defer rows.Close()
-		var IDs []int
-		for rows.Next() {
-			var ID int
-			if err := rows.Scan(&ID); err != nil {
-				return nil, err
-			}
-
-			IDs = append(IDs, ID)
-		}
-		if err := rows.Err(); err != nil {
-			return nil, err
-		}
-		return IDs, nil
-	}()
-	if err != nil {
-		return err
-	}
-
-	deleteAttrSmt, err := tx.Prepare(SQLDeleteAttr)
-	if err != nil {
-		return err
-	}
-
-	for _, id := range IDs {
-		if _, err := deleteAttrSmt.Exec(id); err != nil {
-			return err
-		}
-	}
-
 	if _, err := tx.Exec(SQLDeleteInbound, orderNumber); err != nil {
 		return err
 	}

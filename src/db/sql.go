@@ -1,5 +1,9 @@
 package db
 
+const SQLSetup = `
+PRAGMA foreign_keys = ON;
+`
+
 const SQLReadInboud = `
 SELECT id,
        manufacturer,
@@ -28,6 +32,8 @@ GROUP BY id_element
 `
 
 const SQLSchema = `
+PRAGMA foreign_keys = ON;
+
 CREATE TABLE inventory (
     id INTEGER NOT NULL PRIMARY KEY,
     manufacturer VARCHAR NOT NULL DEFAULT '',
@@ -41,11 +47,12 @@ CREATE TABLE inventory (
 );
 
 CREATE TABLE specifications (
+    id INTEGER NOT NULL PRIMARY KEY,
     id_element INTEGER NOT NULL,
     label VARCHAR NOT NULL DEFAULT '',
     value VARCHAR NOT NULL DEFAULT '',
     unit VARCHAR NOT NULL DEFAULT '',
-    FOREIGN KEY(id_element) REFERENCES inventory(id)
+    FOREIGN KEY(id_element) REFERENCES inventory(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 `
 

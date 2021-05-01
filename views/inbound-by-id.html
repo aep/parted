@@ -84,12 +84,11 @@
                         id="amount-${selects.length}"
                         type="number"
                         class="form-control ml-2"
-                        placeholder="amount" 
+                        placeholder="amount"
                         aria-label="select amount"
                         name="amount"
                         >
                         <button
-                          value="${selects.length}"
                           class="deletebtn btn">
                           x
                         </button>
@@ -143,7 +142,7 @@
           });
 
           $(document).on("click", "button.deletebtn", (e) => {
-            $(this).closest("div").remove();
+            e.target.closest("div.input-group").remove();
             return false;
           });
     </script>

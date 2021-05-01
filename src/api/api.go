@@ -42,6 +42,6 @@ func New() *API {
 		},
 		DB:     db.Connect(),
 		Engine: engine,
-		Cache:  cache.New(5*time.Minute, nil),
+		Cache:  cache.New(5*time.Minute, func(interface{}) {}),
 	}
 }

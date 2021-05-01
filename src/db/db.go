@@ -9,9 +9,11 @@ import (
 	"github.com/aep/parted/src/elem14"
 )
 
-// initializeSchema tries to create the tables
-func (db *Database) initializeSchema() error {
-	_, err := db.DB.Exec(SQLSchema)
+// initialize tries to create the tables
+func (db *Database) initialize() error {
+	db.DB.Exec(SQLSchema)
+
+	_, err := db.DB.Exec(SQLSetup)
 	if err != nil {
 		return err
 	}
@@ -39,7 +41,7 @@ func Connect() *Database {
 
 	// so a schema is always available
 	//nolint
-	database.initializeSchema()
+	database.initialize()
 
 	return database
 }

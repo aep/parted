@@ -2,8 +2,7 @@
 package api
 
 import (
-	"context"
-	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -35,6 +34,7 @@ func (api *API) GetInboundByNumber(c *gin.Context) {
 
 	items, err := api.DB.GetInboundOrder(inbound)
 	if err != nil {
+		log.Println(err)
 		c.JSON(500, gin.H{"error": err})
 		return
 	}
@@ -73,18 +73,21 @@ func (api *API) ModifyInbound(c *gin.Context) {
 		it := api.Cache.Retrieve(items[i])
 		if it == nil {
 			c.JSON(400, "invalid item stored")
+			log.Println("invalid item stored")
 			return
 		}
 		item, ok := it.Data.(elem14.Item)
 		if !ok {
 			c.JSON(400, "invalid item stored")
+			log.Println("invalid item stored")
 			return
 		}
 
 		var err error
 		item.Stock, err = strconv.Atoi(amounts[i])
 		if err != nil {
-			c.JSON(400, "invalid amount field ")
+			c.JSON(400, "invalid amount field")
+			log.Println(err)
 			return
 		}
 		inbound.Data = append(inbound.Data, item)
@@ -93,6 +96,7 @@ func (api *API) ModifyInbound(c *gin.Context) {
 	err := api.DB.UpdateInbound(inbound.Data, inbound.OrderNumber)
 	if err != nil {
 		c.JSON(400, "error occured: "+err.Error())
+		log.Println(err)
 		return
 	}
 
@@ -101,13 +105,43 @@ func (api *API) ModifyInbound(c *gin.Context) {
 
 // CreateInbound creates an inbound item and stores it inside the database
 func (api *API) CreateInbound(c *gin.Context) {
-	inbound := InboundPOST{}
-	err := json.NewDecoder(c.Request.Body).Decode(&inbound)
-	if err != nil {
-		c.JSON(500, gin.H{"error": err})
+	inboundNbr := c.PostForm("ordernumber")
+	items := c.PostFormArray("item")
+	amounts := c.PostFormArray("amount")
+	if len(items) != len(amounts) {
+		c.JSON(400, inboundNbr)
 		return
 	}
-	err = api.DB.Store(context.Background(), inbound.Data, inbound.OrderNumber)
+
+	inbound := InboundPOST{
+		OrderNumber: inboundNbr,
+		Data:        make([]elem14.Item, 0, len(items)),
+	}
+	for i := range items {
+		it := api.Cache.Retrieve(items[i])
+		if it == nil {
+			c.JSON(400, "invalid item stored")
+			log.Println("invalid item stored")
+			return
+		}
+		item, ok := it.Data.(elem14.Item)
+		if !ok {
+			c.JSON(400, "invalid item stored")
+			log.Println("invalid item stored")
+			return
+		}
+
+		var err error
+		item.Stock, err = strconv.Atoi(amounts[i])
+		if err != nil {
+			c.JSON(400, "invalid amount field")
+			log.Println(err)
+			return
+		}
+		inbound.Data = append(inbound.Data, item)
+	}
+
+	err := api.DB.StoreInbound(inbound.Data, inboundNbr)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err})
 		log.Println(err)
@@ -128,6 +162,7 @@ func (api *API) GetInboundItem(c *gin.Context) {
 	inbound := c.Param("inbound")
 	items, err := api.DB.GetInboundOrder(inbound)
 	if err != nil {
+		fmt.Println(err)
 		c.JSON(500, gin.H{"error": err})
 		return
 	}

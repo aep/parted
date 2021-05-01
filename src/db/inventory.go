@@ -1,16 +1,15 @@
 package db
 
 import (
-	"context"
 
 	// database driver initialization
 	"github.com/aep/parted/src/elem14"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// Store implements Storer
-func (db *Database) Store(ctx context.Context, items []elem14.Item, order string) error {
-	tx, err := db.DB.BeginTx(ctx, nil)
+// StoreInbound implements Storer
+func (db *Database) StoreInbound(items []elem14.Item, order string) error {
+	tx, err := db.DB.Begin()
 	if err != nil {
 		return err
 	}
