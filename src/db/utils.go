@@ -2,26 +2,24 @@ package db
 
 import (
 	"strings"
-
-	"github.com/aep/parted/src/elem14"
 )
 
-type Attribute struct {
-	Labels string
-	Units  string
-	Values string
-}
-
-func SQLParseAttributes(item *elem14.Item, attr Attribute, sep string) *elem14.Item {
-	values := strings.Split(attr.Values, sep)
-	units := strings.Split(attr.Units, sep)
-	labels := strings.Split(attr.Labels, sep)
+func (item *Item) SQLParseAttributes(attr IntermediateAttr, sep string) *Item {
+	values := strings.Split(attr.Value.String, sep)
+	units := strings.Split(attr.Unit.String, sep)
+	labels := strings.Split(attr.Label, sep)
+	if len(values) < len(labels) {
+		values = append(values, make([]string, len(values)-len(labels))...)
+	}
+	if len(units) < len(labels) {
+		values = append(values, make([]string, len(values)-len(units))...)
+	}
 
 	for i := range labels {
-		item.Attributes = append(item.Attributes, elem14.Attributes{
-			Attributelabel: labels[i],
-			Attributevalue: values[i],
-			Attributeunit:  units[i],
+		item.Attributes = append(item.Attributes, Attribute{
+			Label: labels[i],
+			Value: values[i],
+			Unit:  units[i],
 		})
 	}
 	return item

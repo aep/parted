@@ -27,8 +27,8 @@ type API struct {
 func New() *API {
 	engine := gin.Default()
 	engine.HTMLRender = ginview.Wrap(gorice.NewWithConfig(rice.MustFindBox("../../views"), goview.Config{
-		DisableCache: true, // TODO only for debug
 		Master:       "layout.html",
+		DisableCache: true,
 	}))
 	sour.StaticMount(engine, "/static/", rice.MustFindBox("../../static"))
 

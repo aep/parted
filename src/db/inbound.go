@@ -1,20 +1,23 @@
 package db
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/aep/parted/src/elem14"
 )
 
 // GetInboundOrder returns the data from a single order
-func (db *Database) GetInboundOrder(orderNumber string) ([]elem14.Item, error) {
+func (db *Database) GetInboundOrder(orderNumber string) ([]Item, error) {
 	rows, err := db.DB.Query(SQLReadInboud, orderNumber)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []elem14.Item
+	var items []Item
 	for rows.Next() {
-		var item elem14.Item
-		var attr Attribute
+		var item Item
+		var attr IntermediateAttr
 		if err := rows.Scan(
 			&item.ID,
 			&item.Manufacturer,
@@ -25,14 +28,15 @@ func (db *Database) GetInboundOrder(orderNumber string) ([]elem14.Item, error) {
 			&item.Used,
 			&item.OrderNumber,
 			&item.BarcodeID,
-			&attr.Values,
-			&attr.Units,
-			&attr.Labels,
+			&item.InsertDate,
+			&attr.Value,
+			&attr.Unit,
+			&attr.Label,
 		); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error reading items %w", err)
 		}
 
-		items = append(items, *SQLParseAttributes(&item, attr, ";;"))
+		items = append(items, *item.SQLParseAttributes(attr, ";;"))
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -53,17 +57,17 @@ func (db *Database) UpdateInbound(items []elem14.Item, orderNumber string) error
 	defer tx.Rollback()
 
 	if _, err := tx.Exec(SQLDeleteInbound, orderNumber); err != nil {
-		return err
+		return fmt.Errorf("error deleting items %w", err)
 	}
 
 	insertItemStmt, err := tx.Prepare(SQLInsertItem)
 	if err != nil {
-		return err
+		return fmt.Errorf("error preparing insert items %w", err)
 	}
 
 	insertMetaStmt, err := tx.Prepare(SQLInsertAttr)
 	if err != nil {
-		return err
+		return fmt.Errorf("error preparing insert attr items %w", err)
 	}
 
 	for _, item := range items {
@@ -75,14 +79,15 @@ func (db *Database) UpdateInbound(items []elem14.Item, orderNumber string) error
 			&item.Stock,
 			&orderNumber,
 			&item.BarcodeID,
+			time.Now(),
 		)
 		if err != nil {
-			return err
+			return fmt.Errorf("error inserting item %w", err)
 		}
 
 		elementID, err := exec.LastInsertId()
 		if err != nil {
-			return err
+			return fmt.Errorf("error getting last inserted id %w", err)
 		}
 
 		for _, spec := range item.Attributes {
@@ -93,7 +98,7 @@ func (db *Database) UpdateInbound(items []elem14.Item, orderNumber string) error
 				&spec.Attributeunit,
 			)
 			if err != nil {
-				return err
+				return fmt.Errorf("error getting attributes %w", err)
 			}
 		}
 

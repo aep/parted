@@ -141,7 +141,7 @@ func (api *API) CreateInbound(c *gin.Context) {
 		inbound.Data = append(inbound.Data, item)
 	}
 
-	err := api.DB.StoreInbound(inbound.Data, inboundNbr)
+	err := api.DB.StoreInbound(elem14ItemToDBItem(inbound.Data), inboundNbr)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err})
 		log.Println(err)

@@ -5,18 +5,20 @@ PRAGMA foreign_keys = ON;
 `
 
 const SQLReadInboud = `
-SELECT id,
-       manufacturer,
-       part_number,
-       description,
-       image,
-       stock,
-       used,
-       order_number,
-       barcode_id,
-       "values",
-       units,
-       labels
+SELECT
+    id,
+    manufacturer,
+    part_number,
+    description,
+    image,
+    stock,
+    used,
+    order_number,
+    barcode_id,
+    insert_date,
+    "values",
+    units,
+    labels
 FROM inventory
 LEFT JOIN
 (
@@ -43,7 +45,8 @@ CREATE TABLE inventory (
     stock INTEGER NOT NULL DEFAULT 0,
     used INTEGER NOT NULL DEFAULT 0,
     order_number VARCHAR NOT NULL DEFAULT '',
-    barcode_id INTEGER NOT NULL DEFAULT 0
+    barcode_id INTEGER NOT NULL DEFAULT 0,
+    insert_date INTEGER NOT NULL
 );
 
 CREATE TABLE specifications (
@@ -64,9 +67,10 @@ INSERT INTO inventory (
 	image,
 	stock,
 	order_number,
-	barcode_id
+	barcode_id,
+    insert_date
 )
-VALUES (?, ?, ?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 `
 
 const SQLInsertAttr = `
@@ -84,6 +88,7 @@ SELECT id,
        used,
        order_number,
        barcode_id,
+       insert_date,
        "values",
        units,
        labels
@@ -103,10 +108,6 @@ GROUP BY id_element
 const SQLDeleteInbound = `
 DELETE FROM inventory WHERE inventory.order_number = ?
 RETURNING id;
-`
-
-const SQLDeleteAttr = `
-DELETE FROM specifications WHERE id_element = ?;
 `
 
 const SQLidsFromInbound = `
