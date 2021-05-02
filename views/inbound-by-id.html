@@ -11,12 +11,11 @@
         <div class="form-group mb-2">
           <label class="tlabel">Internal Order Number</label>
           <p id="ordernumber" name="ordernumber" type="ordernumber"
-            class="form-control" autofocus="true">{{.Inbound}}</p>
+            class="form-control">{{.Inbound}}</p>
         </div>
         <div class="form-group mb-2" id="search-group">
           <label class="tlabel">Search</label>
-          <input id="search" name="search" type="search" class="form-control {{if .email_invalid }} is-invalid {{end}}"
-            autofocus="true" />
+          <input id="search" name="search" type="search" class="form-control {{if .email_invalid }} is-invalid {{end}}"/>
         </div>
         {{range .Items}}
         <div id="{{.ID}}" class="input-group mt-2" aria-label="input group" name="{{.ID}}">
@@ -37,7 +36,7 @@
 
 
     <script>
-          let selects = [];
+          let sel_len = $(".input-group").length;
           $("body").on("keydown", "input, select", function (e) {
             if (e.which === 13) {
               var self = $(this);
@@ -46,11 +45,12 @@
 
               if (
                 selfid == "ordernumber" ||
-                selfid == "amount-" + selects.length
+                selfid == "amount-" + sel_len
               ) {
                 search.val("");
                 search.focus();
               } else if (selfid == "search") {
+                
                 $.get("/json/partsearch/" + $("#search").val()).always(
                   (data) => {
                     if (!data.length) {
@@ -67,21 +67,25 @@
                       search.focus();
                       return;
                     }
-
-                    selects.push(data);
-
-                    $("#search-group").append(
+                    
+                    sel_len++;
+                    
+                    let group =
+                      $(".input-group:last").length != 0
+                        ? $(".input-group:last")
+                        : $("#search-group");
+                    group.after(
                       `
                       <div class="input-group mt-2">
                         <select
-                        id="select-${selects.length}"
+                        id="select-${sel_len}"
                         class="custom-select"
                         aria-label="select element"
                         name="item"
                         </select>
 
                         <input
-                        id="amount-${selects.length}"
+                        id="amount-${sel_len}"
                         type="number"
                         class="form-control ml-2"
                         placeholder="amount"
@@ -96,15 +100,15 @@
                       `
                     );
 
-                    selects[selects.length - 1].forEach((value, index) => {
-                      $(`#select-${selects.length}`).append(
+                    data.forEach((value) => {
+                      $(`#select-${sel_len}`).append(
                         $("<option></option>")
                           .val(value.description)
                           .html(value.description)
                       );
                     });
 
-                    $("#amount-" + selects.length).focus();
+                    $("#amount-" + sel_len).focus();
                   }
                 );
               }

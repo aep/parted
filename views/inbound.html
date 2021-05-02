@@ -45,17 +45,14 @@
         </button>
 
         <script>
-          let selects = [];
+          let sel_len = 0;
           $("body").on("keydown", "input, select", function (e) {
             if (e.which === 13) {
               var self = $(this);
               var selfid = self.attr("id");
               let search = $("#search");
 
-              if (
-                selfid == "ordernumber" ||
-                selfid == "amount-" + selects.length
-              ) {
+              if (selfid == "ordernumber" || selfid == "amount-" + sel_len) {
                 search.val("");
                 search.focus();
               } else if (selfid == "search") {
@@ -76,20 +73,24 @@
                       return;
                     }
 
-                    selects.push(data);
+                    sel_len++;
 
-                    $("#search-group").append(
+                    let group =
+                      $(".input-group:last").length != 0
+                        ? $(".input-group:last")
+                        : $("#search-group");
+                    group.after(
                       `
                       <div class="input-group mt-2">
                         <select
-                        id="select-${selects.length}"
+                        id="select-${sel_len}"
                         class="custom-select"
                         aria-label="select element"
                         name="item"
                         </select>
 
                         <input
-                        id="amount-${selects.length}"
+                        id="amount-${sel_len}"
                         type="number"
                         class="form-control ml-2"
                         placeholder="amount"
@@ -104,15 +105,15 @@
                       `
                     );
 
-                    selects[selects.length - 1].forEach((value, index) => {
-                      $(`#select-${selects.length}`).append(
+                    data.forEach((value) => {
+                      $(`#select-${sel_len}`).append(
                         $("<option></option>")
                           .val(value.description)
                           .html(value.description)
                       );
                     });
 
-                    $("#amount-" + selects.length).focus();
+                    $("#amount-" + sel_len).focus();
                   }
                 );
               }
@@ -143,7 +144,7 @@
                   `
                   <div class="alert alert-success" role="alert">
                     Items processed!
-                    </div>
+                  </div>
                     `
                 )
                 .fadeIn();
@@ -153,7 +154,7 @@
           });
 
           $(document).on("click", "button.deletebtn", (e) => {
-            e.target.closest("div.input-group").remove();
+            e.target.closest("div").remove();
             return false;
           });
         </script>
