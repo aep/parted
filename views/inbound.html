@@ -135,10 +135,7 @@
               )
               .fadeIn();
 
-            $.post(
-              "/inbound/" + $("#ordernumber").html(),
-              $("#item-form").serialize()
-            ).done(() => {
+            $.post("/inbound", $("#item-form").serialize()).done(() => {
               $("#alerts")
                 .html(
                   `
@@ -149,8 +146,8 @@
                 )
                 .fadeIn();
               $("#alerts").delay(2500).fadeOut();
+              window.location.replace("/inbound/" + $("#ordernumber").val());
             });
-            window.location.replace("/inbound/" + $("#ordernumber").val());
           });
 
           $(document).on("click", "button.deletebtn", (e) => {
