@@ -29,7 +29,7 @@ func elem14ItemToDBItem(src []elem14.Item) []db.Item {
 			Used:         i.Used,
 			OrderNumber:  i.OrderNumber,
 			BarcodeID:    i.BarcodeID,
-			InsertDate:   time.Now(),
+			InsertDate:   time.Now().UTC(),
 			Attributes:   attrDst,
 		})
 	}

@@ -79,7 +79,7 @@ func (db *Database) UpdateInbound(items []elem14.Item, orderNumber string) error
 			&item.Stock,
 			&orderNumber,
 			&item.BarcodeID,
-			time.Now(),
+			time.Now().UTC(),
 		)
 		if err != nil {
 			return fmt.Errorf("error inserting item %w", err)

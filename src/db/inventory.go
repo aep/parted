@@ -4,7 +4,6 @@ import (
 
 	// database driver initialization
 	"fmt"
-	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -38,7 +37,7 @@ func (db *Database) StoreInbound(items []Item, order string) error {
 			&item.Stock,
 			&order,
 			&item.BarcodeID,
-			time.Now().Unix(),
+			&item.InsertDate,
 		)
 		if err != nil {
 			return fmt.Errorf("error inserting item %w", err)

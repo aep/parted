@@ -46,7 +46,7 @@ CREATE TABLE inventory (
     used INTEGER NOT NULL DEFAULT 0,
     order_number VARCHAR NOT NULL DEFAULT '',
     barcode_id INTEGER NOT NULL DEFAULT 0,
-    insert_date INTEGER NOT NULL
+    insert_date DATETIME NOT NULL
 );
 
 CREATE TABLE specifications (
