@@ -3,8 +3,6 @@ package db
 import (
 	"fmt"
 	"time"
-
-	"github.com/aep/parted/src/elem14"
 )
 
 // GetInboundOrder returns the data from a single order
@@ -48,7 +46,7 @@ func (db *Database) GetInboundOrder(orderNumber string) ([]Item, error) {
 }
 
 // UpdateInbound delete existing items and insert the new ones
-func (db *Database) UpdateInbound(items []elem14.Item, orderNumber string) error {
+func (db *Database) UpdateInbound(items []Item, orderNumber string) error {
 	tx, err := db.DB.Begin()
 	if err != nil {
 		return err
@@ -93,9 +91,9 @@ func (db *Database) UpdateInbound(items []elem14.Item, orderNumber string) error
 		for _, spec := range item.Attributes {
 			_, err := insertMetaStmt.Exec(
 				&elementID,
-				&spec.Attributelabel,
-				&spec.Attributevalue,
-				&spec.Attributeunit,
+				&spec.Label,
+				&spec.Value,
+				&spec.Unit,
 			)
 			if err != nil {
 				return fmt.Errorf("error getting attributes %w", err)

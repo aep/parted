@@ -1,6 +1,7 @@
 package api
 
 import (
+	"strings"
 	"time"
 
 	"github.com/aep/parted/src/cache"
@@ -17,11 +18,11 @@ func (api *API) SearchPart(c *gin.Context) {
 		return
 	}
 
-	items := elements.ToItems()
+	items := elem14ItemToDBItem(elements.ToItems())
 
 	for _, i := range items {
-		api.Cache.Store(i.Description, &cache.Item{
-			ExpiryTime: time.Now().Add(30 * time.Minute),
+		api.Cache.Store(strings.Join(strings.Fields(i.Description), " "), &cache.Item{
+			ExpiryTime: time.Now().Add(2 * time.Hour),
 			Data:       i,
 		})
 	}

@@ -123,5 +123,6 @@ SELECT
     insert_date
 FROM inventory
     GROUP BY order_number
+    ORDER BY insert_date DESC
 LIMIT ? OFFSET ?;
 `

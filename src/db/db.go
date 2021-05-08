@@ -51,23 +51,23 @@ func Connect() *Database {
 }
 
 type Item struct {
-	ID           int       `db:"id"`
-	Manufacturer string    `db:"manufacturer"`
-	PartNumber   string    `db:"part_number"`
-	Description  string    `db:"description"`
-	Image        string    `db:"image"`
-	Stock        int       `db:"stock"`
-	Used         int       `db:"used"`
-	OrderNumber  string    `db:"order_number"`
-	BarcodeID    int       `db:"barcode_id"`
-	InsertDate   time.Time `db:"insert_date"`
-	Attributes   []Attribute
+	ID           int         `db:"id" json:"id"`
+	Manufacturer string      `db:"manufacturer" json:"manufacturer"`
+	PartNumber   string      `db:"part_number" json:"part_number"`
+	Description  string      `db:"description" json:"description"`
+	Image        string      `db:"image" json:"image"`
+	Stock        int         `db:"stock" json:"stock"`
+	Used         int         `db:"used" json:"used"`
+	OrderNumber  string      `db:"order_number" json:"order_number"`
+	BarcodeID    int         `db:"barcode_id" json:"barcode_id"`
+	InsertDate   time.Time   `db:"insert_date" json:"insert_date"`
+	Attributes   []Attribute `json:"attributes"`
 }
 
 type Attribute struct {
-	Label string
-	Value string
-	Unit  string
+	Label string `json:"label"`
+	Value string `json:"value"`
+	Unit  string `json:"unit"`
 }
 
 // IntermediateAttr holds the intermediate values to handle the conversions

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/aep/parted/src/cache"
-	"github.com/aep/parted/src/elem14"
+	"github.com/aep/parted/src/db"
 	"github.com/aep/sour"
 	"github.com/gin-gonic/gin"
 )
@@ -67,30 +67,27 @@ func (api *API) ModifyInbound(c *gin.Context) {
 
 	inbound := InboundPOST{
 		OrderNumber: inboundNbr,
-		Data:        make([]elem14.Item, 0, len(items)),
+		Data:        make([]db.Item, 0, len(items)),
 	}
 	for i := range items {
 		it := api.Cache.Retrieve(items[i])
 		if it == nil {
-			c.JSON(400, "invalid item stored")
-			log.Println("invalid item stored")
-			return
-		}
-		item, ok := it.Data.(elem14.Item)
-		if !ok {
-			c.JSON(400, "invalid item stored")
-			log.Println("invalid item stored")
-			return
+			if err := api.RefreshInboundCache(inboundNbr); err != nil {
+				it = api.Cache.Retrieve(items[i])
+				if it == nil {
+					c.HTML(500, "Could not retrieve the item from the cache, please re-enter your data", nil)
+				}
+			}
 		}
 
 		var err error
-		item.Stock, err = strconv.Atoi(amounts[i])
+		it.Data.Stock, err = strconv.Atoi(amounts[i])
 		if err != nil {
 			c.JSON(400, "invalid amount field")
 			log.Println(err)
 			return
 		}
-		inbound.Data = append(inbound.Data, item)
+		inbound.Data = append(inbound.Data, it.Data)
 	}
 
 	err := api.DB.UpdateInbound(inbound.Data, inbound.OrderNumber)
@@ -103,6 +100,21 @@ func (api *API) ModifyInbound(c *gin.Context) {
 	c.JSON(200, inbound)
 }
 
+func (api *API) RefreshInboundCache(inboundNbr string) error {
+	items, err := api.DB.GetInboundOrder(inboundNbr)
+	if err != nil {
+		return err
+	}
+
+	for _, i := range items {
+		api.Cache.Store(strings.Join(strings.Fields(i.Description), " "), &cache.Item{
+			ExpiryTime: time.Now().Add(2 * time.Hour),
+			Data:       i,
+		})
+	}
+	return nil
+}
+
 // CreateInbound creates an inbound item and stores it inside the database
 func (api *API) CreateInbound(c *gin.Context) {
 	inboundNbr := c.PostForm("ordernumber")
@@ -113,35 +125,29 @@ func (api *API) CreateInbound(c *gin.Context) {
 		return
 	}
 
+	log.Println(items)
+
 	inbound := InboundPOST{
 		OrderNumber: inboundNbr,
-		Data:        make([]elem14.Item, 0, len(items)),
+		Data:        make([]db.Item, 0, len(items)),
 	}
 	for i := range items {
-		it := api.Cache.Retrieve(items[i])
+		it := api.Cache.Retrieve(strings.Join(strings.Fields(items[i]), " "))
 		if it == nil {
-			c.JSON(400, "invalid item stored")
-			log.Println("invalid item stored")
-			return
-		}
-		item, ok := it.Data.(elem14.Item)
-		if !ok {
-			c.JSON(400, "invalid item stored")
-			log.Println("invalid item stored")
 			return
 		}
 
 		var err error
-		item.Stock, err = strconv.Atoi(amounts[i])
+		it.Data.Stock, err = strconv.Atoi(amounts[i])
 		if err != nil {
 			c.JSON(400, "invalid amount field")
 			log.Println(err)
 			return
 		}
-		inbound.Data = append(inbound.Data, item)
+		inbound.Data = append(inbound.Data, it.Data)
 	}
 
-	err := api.DB.StoreInbound(elem14ItemToDBItem(inbound.Data), inboundNbr)
+	err := api.DB.StoreInbound(inbound.Data, inboundNbr)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err})
 		log.Println(err)
@@ -154,8 +160,8 @@ func (api *API) CreateInbound(c *gin.Context) {
 // InboundPOST represents an inbound post form
 // It contains the order number and the products scanned
 type InboundPOST struct {
-	OrderNumber string        `json:"order_number"`
-	Data        []elem14.Item `json:"data"`
+	OrderNumber string    `json:"order_number"`
+	Data        []db.Item `json:"data"`
 }
 
 func (api *API) GetInboundItem(c *gin.Context) {

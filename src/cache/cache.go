@@ -5,6 +5,8 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"github.com/aep/parted/src/db"
 )
 
 // Store is a cache store. It holds the items until their lifetime has expired
@@ -17,7 +19,7 @@ type Store struct {
 
 type Item struct {
 	ExpiryTime time.Time
-	Data       interface{}
+	Data       db.Item
 }
 
 func New(GCRound time.Duration, onClean func(interface{})) *Store {
