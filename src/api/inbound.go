@@ -2,7 +2,6 @@
 package api
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -125,8 +124,6 @@ func (api *API) CreateInbound(c *gin.Context) {
 		return
 	}
 
-	log.Println(items)
-
 	inbound := InboundPOST{
 		OrderNumber: inboundNbr,
 		Data:        make([]db.Item, 0, len(items)),
@@ -168,8 +165,8 @@ func (api *API) GetInboundItem(c *gin.Context) {
 	inbound := c.Param("inbound")
 	items, err := api.DB.GetInboundOrder(inbound)
 	if err != nil {
-		fmt.Println(err)
 		c.JSON(500, gin.H{"error": err})
+		log.Println(err)
 		return
 	}
 

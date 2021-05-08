@@ -26,7 +26,7 @@ func (api *API) GetInventory(c *gin.Context) {
 
 	Inbounds, Max, err := api.DB.ReadInboundList(page, PerPage)
 	if err != nil {
-		c.JSON(500, "there was an error")
+		c.JSON(500, gin.H{"error": err})
 		log.Println(err)
 		return
 	}
@@ -58,6 +58,7 @@ func (api *API) GetJSONInventory(c *gin.Context) {
 	items, err := api.DB.ReadAll()
 	if err != nil {
 		c.JSON(500, gin.H{"error": err})
+		log.Println(err)
 		return
 	}
 
