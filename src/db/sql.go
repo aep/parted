@@ -114,3 +114,14 @@ const SQLidsFromInbound = `
 SELECT id
 FROM inventory WHERE order_number = ?;
 `
+
+const SQLReadInboundWithOffset = `
+SELECT
+    (SELECT COUNT(DISTINCT order_number) FROM inventory) as max,
+    COUNT(id) count,
+    order_number,
+    insert_date
+FROM inventory
+    GROUP BY order_number
+LIMIT ? OFFSET ?;
+`

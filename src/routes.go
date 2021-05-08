@@ -12,13 +12,10 @@ import (
 func ListenAndServe() {
 	a := api.New()
 
-	// Front
 	a.Engine.GET("/", api.ToInbound)
-	a.Engine.GET("/inventory", api.GetInventory)
+	a.Engine.GET("/inventory", a.GetInventory)
 	a.Engine.GET("/inbound", api.GetInbound)
 	a.Engine.GET("/inbound/:inbound", a.GetInboundByNumber)
-
-	// Back
 	a.Engine.POST("/inbound/:inbound", a.ModifyInbound)
 	a.Engine.POST("/inbound", a.CreateInbound)
 	a.Engine.GET("/json/partsearch/:part", a.SearchPart)

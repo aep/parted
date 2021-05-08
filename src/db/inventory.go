@@ -4,6 +4,7 @@ import (
 
 	// database driver initialization
 	"fmt"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -104,4 +105,55 @@ func (db *Database) ReadAll() ([]Item, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+func (db *Database) ReadInboundList(page, perPage int) ([]Inbound, int, error) {
+	limit, offset := paginate(page, perPage)
+
+	rows, err := db.DB.Query(SQLReadInboundWithOffset, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var inbounds []Inbound
+
+	max := 0
+	for rows.Next() {
+		var inbound Inbound
+		if err := rows.Scan(
+			&max,
+			&inbound.Count,
+			&inbound.OrderNumber,
+			&inbound.InsertDate,
+		); err != nil {
+			return nil, 0, fmt.Errorf("error reading items %w", err)
+		}
+		inbounds = append(inbounds, inbound)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, 0, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	return inbounds, max, nil
+}
+
+// Inbound composes an inboud list
+type Inbound struct {
+	OrderNumber string
+	Count       int
+	InsertDate  time.Time
+}
+
+// FormatTime is used to format the time when pasting the inbound
+func (i Inbound) FormatTime(t time.Time) string {
+	return t.Local().Format("2 Jan 15h04 2006")
+}
+
+func paginate(page int, perPage int) (limit int, offset int) {
+	limit = perPage
+	offset = page * perPage
+	return limit, offset
 }
