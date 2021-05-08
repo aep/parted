@@ -27,11 +27,22 @@ func GetInbound(c *gin.Context) {
 	})
 }
 
+// DeleteInbound deletes the requested inbound
+func (api *API) DeleteInbound(c *gin.Context) {
+	inbound := c.Param("inbound")
+
+	if err := api.DB.DeleteInbound(inbound); err != nil {
+		c.JSON(500, "an unexpected error happened: "+err.Error())
+	}
+
+	c.Status(200)
+}
+
 // GetInboundByNumber returns the concerned inbound html page
 func (api *API) GetInboundByNumber(c *gin.Context) {
 	inbound := c.Param("inbound")
 
-	items, err := api.DB.GetInboundOrder(inbound)
+	items, err := api.DB.ReadInbound(inbound)
 	if err != nil {
 		log.Println(err)
 		c.JSON(500, gin.H{"error": err})
@@ -100,7 +111,7 @@ func (api *API) ModifyInbound(c *gin.Context) {
 }
 
 func (api *API) RefreshInboundCache(inboundNbr string) error {
-	items, err := api.DB.GetInboundOrder(inboundNbr)
+	items, err := api.DB.ReadInbound(inboundNbr)
 	if err != nil {
 		return err
 	}
@@ -144,7 +155,7 @@ func (api *API) CreateInbound(c *gin.Context) {
 		inbound.Data = append(inbound.Data, it.Data)
 	}
 
-	err := api.DB.StoreInbound(inbound.Data, inboundNbr)
+	err := api.DB.InsertInbound(inbound.Data, inboundNbr)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err})
 		log.Println(err)
@@ -163,7 +174,7 @@ type InboundPOST struct {
 
 func (api *API) GetInboundItem(c *gin.Context) {
 	inbound := c.Param("inbound")
-	items, err := api.DB.GetInboundOrder(inbound)
+	items, err := api.DB.ReadInbound(inbound)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err})
 		log.Println(err)

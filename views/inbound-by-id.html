@@ -2,20 +2,47 @@
 
 <div class="container">
   <div class="row justify-content-center">
-    <div class="col-12 col-md-5 col-xl-4 my-5">
-      <h1 class="mb-2">Inbound {{.Inbound}}</h1>
-      <p class="text-muted mb-4">Adding parts to inventory</p>
-      <br />
+    <div class="col-12 col-md-5 col-xl-7 my-5">
+      <div class="header-body">
+        <div class="row align-items-center">
+          <div class="col">
+            <h6 class="header-pretitle">Inbound Modification</h6>
+            <h1 class="header-title text-truncate">Inbound {{.Inbound}}</h1>
+          </div>
+          <a id="delete-inbound-btn" href="/inbound" class="btn btn-danger ml">
+            Delete
+          </a>
+          <script>
+            $(document).on("click", "#delete-inbound-btn", (e) => {
+              if (confirm("Are you sure you want to delete this inbound?")) {
+                fetch("/inbound/" + $('#ordernumber').html(), {
+                  method: "DELETE",
+                }).then((r) => {
+                  switch (r.status) {
+                    case 200:
+                      alert(`inbound ${$('#ordernumber').html()} deleted`)
+                      window.location.replace("/inbound");
+                      break
+                    default:
+                      console.error(`something unexpected happened: ${r.statusText}`)
+                  }
+                })
+              }
+              return false
+            });
+          </script>
+        </div>
+      </div>
       <div id="alerts"></div>
       <form method="post" id="item-form">
         <div class="form-group mb-2">
           <label class="tlabel">Internal Order Number</label>
-          <p id="ordernumber" name="ordernumber" type="ordernumber"
-            class="form-control">{{.Inbound}}</p>
+          <p id="ordernumber" name="ordernumber" type="ordernumber">{{.Inbound}}</p>
         </div>
         <div class="form-group mb-2" id="search-group">
           <label class="tlabel">Search</label>
-          <input id="search" name="search" type="search" class="form-control {{if .email_invalid }} is-invalid {{end}}"/>
+          <input id="search" name="search" type="search"
+            class="form-control {{if .email_invalid }} is-invalid {{end}}" />
         </div>
         {{range .Items}}
         <div id="{{.ID}}" class="input-group mt-2" aria-label="input group" name="{{.ID}}">
@@ -23,7 +50,7 @@
             <option selected>{{.Description}}</option>
           </select>
 
-          <input id="amount-{{.ID}}" type="number" class="form-control ml-2" placeholder="amount"
+          <input id="amount-{{.ID}}" type="number" class="form-control ml-2 col-2 text-center" placeholder="amount"
             aria-label="select amount" value="{{.Stock}}" name="amount" />
           <button value="{{.ID}}" class="deletebtn btn">x</button>
         </div>
@@ -36,46 +63,46 @@
 
 
     <script>
-          let sel_len = $(".input-group").length;
-          $("body").on("keydown", "input, select", function (e) {
-            if (e.which === 13) {
-              var self = $(this);
-              var selfid = self.attr("id");
-              let search = $("#search");
+      let sel_len = $(".input-group").length;
+      $("body").on("keydown", "input, select", function (e) {
+        if (e.which === 13) {
+          var self = $(this);
+          var selfid = self.attr("id");
+          let search = $("#search");
 
-              if (
-                selfid == "ordernumber" ||
-                selfid == "amount-" + sel_len
-              ) {
-                search.val("");
-                search.focus();
-              } else if (selfid == "search") {
-                
-                $.get("/json/partsearch/" + $("#search").val()).always(
-                  (data) => {
-                    if (!data.length) {
-                      $("#alerts")
-                        .html(
-                          `
+          if (
+            selfid == "ordernumber" ||
+            selfid == "amount-" + sel_len
+          ) {
+            search.val("");
+            search.focus();
+          } else if (selfid == "search") {
+
+            $.get("/json/partsearch/" + $("#search").val()).always(
+              (data) => {
+                if (!data.length) {
+                  $("#alerts")
+                    .html(
+                      `
                   <div class="alert alert-danger" role="alert">
                     Item not found
                   </div>
                         `
-                        )
-                        .fadeIn();
-                      $("#alerts").delay(2500).fadeOut();
-                      search.focus();
-                      return;
-                    }
-                    
-                    sel_len++;
-                    
-                    let group =
-                      $(".input-group:last").length != 0
-                        ? $(".input-group:last")
-                        : $("#search-group");
-                    group.after(
-                      `
+                    )
+                    .fadeIn();
+                  $("#alerts").delay(2500).fadeOut();
+                  search.focus();
+                  return;
+                }
+
+                sel_len++;
+
+                let group =
+                  $(".input-group:last").length != 0
+                    ? $(".input-group:last")
+                    : $("#search-group");
+                group.after(
+                  `
                       <div class="input-group mt-2">
                         <select
                         id="select-${sel_len}"
@@ -87,7 +114,7 @@
                         <input
                         id="amount-${sel_len}"
                         type="number"
-                        class="form-control ml-2"
+                        class="form-control ml-2 col-2 text-center"
                         placeholder="amount"
                         aria-label="select amount"
                         name="amount"
@@ -98,57 +125,57 @@
                         </button>
                         <div/>
                       `
-                    );
-
-                    data.forEach((value) => {
-                      $(`#select-${sel_len}`).append(
-                        $("<option></option>")
-                          .val(value.description)
-                          .html(value.description)
-                      );
-                    });
-
-                    $("#amount-" + sel_len).focus();
-                  }
                 );
+
+                data.forEach((value) => {
+                  $(`#select-${sel_len}`).append(
+                    $("<option></option>")
+                      .val(value.description)
+                      .html(value.description)
+                  );
+                });
+
+                $("#amount-" + sel_len).focus();
               }
+            );
+          }
 
-              return false;
-            }
-          });
+          return false;
+        }
+      });
 
-          $("#confirm-button").click((e) => {
-            e.preventDefault();
+      $("#confirm-button").click((e) => {
+        e.preventDefault();
 
-            $("#alerts")
-              .html(
-                `
+        $("#alerts")
+          .html(
+            `
                 <div class="alert alert-info" role="alert">
                   Processing the items
                 </div>
                 `
-              )
-              .fadeIn();
+          )
+          .fadeIn();
 
-              $.post("/inbound/"+$('#ordernumber').html(), $( "#item-form" ).serialize()).done(() => {
-                $("#alerts")
-                .html(
-                  `
+        $.post("/inbound/" + $('#ordernumber').html(), $("#item-form").serialize()).done(() => {
+          $("#alerts")
+            .html(
+              `
                   <div class="alert alert-success" role="alert">
                     Items processed!
                     </div>
                     `
-                    )
-                    .fadeIn()
-                    $("#alerts").delay(2500).fadeOut();
-                  }
-              )
-          });
+            )
+            .fadeIn()
+          $("#alerts").delay(2500).fadeOut();
+        }
+        )
+      });
 
-          $(document).on("click", "button.deletebtn", (e) => {
-            e.target.closest("div.input-group").remove();
-            return false;
-          });
+      $(document).on("click", "button.deletebtn", (e) => {
+        e.target.closest("div.input-group").remove();
+        return false;
+      });
     </script>
     </form>
   </div>

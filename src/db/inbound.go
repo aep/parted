@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-// GetInboundOrder returns the data from a single order
-func (db *Database) GetInboundOrder(orderNumber string) ([]Item, error) {
+// ReadInbound returns the data from a single order
+func (db *Database) ReadInbound(orderNumber string) ([]Item, error) {
 	rows, err := db.DB.Query(SQLReadInboud, orderNumber)
 	if err != nil {
 		return nil, err

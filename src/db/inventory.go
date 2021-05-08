@@ -9,8 +9,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// StoreInbound implements Storer
-func (db *Database) StoreInbound(items []Item, order string) error {
+// InsertInbound implements Storer
+func (db *Database) InsertInbound(items []Item, order string) error {
 	tx, err := db.DB.Begin()
 	if err != nil {
 		return err
@@ -138,6 +138,11 @@ func (db *Database) ReadInboundList(page, perPage int) ([]Inbound, int, error) {
 		return nil, 0, err
 	}
 	return inbounds, max, nil
+}
+
+func (db *Database) DeleteInbound(inbound string) error {
+	_, err := db.DB.Exec(SQLDeleteInbound, inbound)
+	return err
 }
 
 // Inbound composes an inboud list
