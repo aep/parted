@@ -3,46 +3,54 @@
 <div class="container">
   <div class="row justify-content-center">
     <div class="col-12 col-md-5 col-xl-4 my-5">
-      <!-- Heading -->
-      <h1 class="mb-2">Inbound</h1>
-
+      <h1 class="mb-2">Inbound {{.Inbound}}</h1>
       <p class="text-muted mb-4">Adding parts to inventory</p>
-
       <br />
-
       <div id="alerts"></div>
       <form method="post" id="item-form">
-        <!-- Email address -->
         <div class="form-group mb-2">
           <label class="tlabel">Internal Order Number</label>
-          <input id="ordernumber" name="ordernumber" type="ordernumber"
-            class="form-control {{if .email_invalid }} is-invalid {{end}}" autofocus="true" />
+          <p id="ordernumber" name="ordernumber" type="ordernumber"
+            class="form-control">{{.Inbound}}</p>
         </div>
-
         <div class="form-group mb-2" id="search-group">
           <label class="tlabel">Search</label>
-          <input id="search" name="search" type="search" class="form-control {{if .email_invalid }} is-invalid {{end}}"
-            autofocus="true" />
+          <input id="search" name="search" type="search" class="form-control {{if .email_invalid }} is-invalid {{end}}"/>
         </div>
+        {{range .Items}}
+        <div id="{{.ID}}" class="input-group mt-2" aria-label="input group" name="{{.ID}}">
+          <select id="select-{{.ID}}" class="custom-select" aria-label="select element" name="item">
+            <option selected>{{.Description}}</option>
+          </select>
 
+          <input id="amount-{{.ID}}" type="number" class="form-control ml-2" placeholder="amount"
+            aria-label="select amount" value="{{.Stock}}" name="amount" />
+          <button value="{{.ID}}" class="deletebtn btn">x</button>
+        </div>
+        {{end}}
         <br />
-
-        <button id="confirm-button" class="btn btn-lg btn-block btn-primary mt-2 mb-4 disabled">
+        <button id="confirm-button" class="btn btn-lg btn-block btn-primary mt-2 mb-4">
           Confirm
         </button>
+    </div>
 
-        <script>
-          let sel_len = 0;
+
+    <script>
+          let sel_len = $(".input-group").length;
           $("body").on("keydown", "input, select", function (e) {
             if (e.which === 13) {
               var self = $(this);
               var selfid = self.attr("id");
               let search = $("#search");
 
-              if (selfid == "ordernumber" || selfid == "amount-" + sel_len) {
+              if (
+                selfid == "ordernumber" ||
+                selfid == "amount-" + sel_len
+              ) {
                 search.val("");
                 search.focus();
               } else if (selfid == "search") {
+                
                 $.get("/json/partsearch/" + $("#search").val()).always(
                   (data) => {
                     if (!data.length) {
@@ -59,9 +67,9 @@
                       search.focus();
                       return;
                     }
-
+                    
                     sel_len++;
-
+                    
                     let group =
                       $(".input-group:last").length != 0
                         ? $(".input-group:last")
@@ -122,29 +130,28 @@
               )
               .fadeIn();
 
-            $.post("/inbound", $("#item-form").serialize()).done(() => {
-              $("#alerts")
+              $.post("/inbound/"+$('#ordernumber').html(), $( "#item-form" ).serialize()).done(() => {
+                $("#alerts")
                 .html(
                   `
                   <div class="alert alert-success" role="alert">
                     Items processed!
-                  </div>
+                    </div>
                     `
-                )
-                .fadeIn();
-              $("#alerts").delay(2500).fadeOut();
-              window.location.replace("/inbound/" + $("#ordernumber").val());
-            });
+                    )
+                    .fadeIn()
+                    $("#alerts").delay(2500).fadeOut();
+                  }
+              )
           });
 
           $(document).on("click", "button.deletebtn", (e) => {
-            e.target.closest("div").remove();
+            e.target.closest("div.input-group").remove();
             return false;
           });
-        </script>
-      </form>
-    </div>
+    </script>
+    </form>
   </div>
 </div>
 
-{{end}}
+{{ end }}

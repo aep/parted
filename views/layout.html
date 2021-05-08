@@ -15,8 +15,8 @@
 
     </head>
     <body {{ if .nav}} {{else}} class='bg-auth' {{end}}>
-        <script src="{{ call .static "static/js/jquery.min.js"}}"></script>
-        <script src="{{ call .static "static/js/bootstrap.bundle.min.js"}}"></script>
+        <script src="{{ call .static "/static/js/jquery.min.js"}}"></script>
+        <script src="{{ call .static "/static/js/bootstrap.bundle.min.js"}}"></script>
 
 
 
@@ -153,7 +153,7 @@
 
         <nav id='topnavbar' class="navbar navbar-expand navbar-light pl-5 pr-5">
             <a class="navbar-brand " href="#">
-                <img class="" src="{{ call .static "static/img/logo.png"}}" alt="logo" >
+                <img class="" src="{{ call .static "/static/img/logo.png"}}" alt="logo" >
                 devguard
             </a>
 
@@ -182,7 +182,7 @@
                            href="#" id="topnavPages" role="button"
                             data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
                         >
-                            <img class="appicon" src="{{ call .static "static/img/appicon.png"}}" alt="logo" >
+                            <img class="appicon" src="{{ call .static "/static/img/appicon.png"}}" alt="logo" >
                             idp
                         </a>
 
@@ -218,7 +218,7 @@ $(function() {
         {{ if .nav}}
         {{end}}
 
-        <script src="{{ call .static "static/js/Chart.bundle.min.js"}}" async></script>
+        <script src="{{ call .static "/static/js/Chart.bundle.min.js"}}" async></script>
         <script src="{{call .static "/static/js/theme.min.js"}}"></script>
     <script>
 $(function() {

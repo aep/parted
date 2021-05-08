@@ -8,4 +8,5 @@ require (
 	github.com/foolin/goview v0.3.0
 	github.com/gin-gonic/gin v1.7.1
 	github.com/joho/godotenv v1.3.0
+	github.com/mattn/go-sqlite3 v1.14.7
 )
