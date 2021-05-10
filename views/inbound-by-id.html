@@ -2,16 +2,12 @@
 
 <div class="container">
   <div class="row justify-content-center">
-    <div class="col-12 col-md-5 col-xl-7 my-5">
-      <div class="header-body">
-        <div class="row align-items-center">
-          <div class="col">
-            <h6 class="header-pretitle">Inbound Modification</h6>
-            <h1 class="header-title text-truncate">Inbound {{.Inbound}}</h1>
-          </div>
-          <a id="delete-inbound-btn" href="/inbound" class="btn btn-danger ml">
-            Delete
-          </a>
+    <div class="col-12 col-md-10 col-lg-8 col-xl-7 my-5 pt-5 text-center">
+      <div class="card m-auto" style="max-width: 500px;">
+        <div class="card-body">
+          <h1 class="header-title text-truncate">Inbound {{.Inbound}}</h1>
+          <p class="text-muted text-center mb-4">Inbound Modification</p>
+
           <script>
             $(document).on("click", "#delete-inbound-btn", (e) => {
               if (confirm("Are you sure you want to delete this inbound?")) {
@@ -31,8 +27,7 @@
               return false
             });
           </script>
-        </div>
-      </div>
+
       <div id="alerts"></div>
       <form method="post" id="item-form">
         <div class="form-group mb-2">
@@ -45,12 +40,12 @@
             class="form-control {{if .email_invalid }} is-invalid {{end}}" />
         </div>
         {{range .Items}}
-        <div id="{{.ID}}" class="input-group mt-2" aria-label="input group" name="{{.ID}}">
+        <div id="{{.ID}}" class="input-group mt-4" aria-label="input group" name="{{.ID}}">
           <select id="select-{{.ID}}" class="custom-select" aria-label="select element" name="item">
             <option selected>{{.Description}}</option>
           </select>
 
-          <input id="amount-{{.ID}}" type="number" class="form-control ml-2 col-2 text-center" placeholder="amount"
+          <input id="amount-{{.ID}}" type="number" class="form-control ml-2 col-2 text-center border-property" placeholder="amount"
             aria-label="select amount" value="{{.Stock}}" name="amount" />
           <button value="{{.ID}}" class="deletebtn btn">x</button>
         </div>
@@ -59,6 +54,9 @@
         <button id="confirm-button" class="btn btn-lg btn-block btn-primary mt-2 mb-4">
           Confirm
         </button>
+          <a id="delete-inbound-btn" href="/inbound" class="btn btn-danger ml btn-lg btn-block ">
+            Delete
+          </a>
     </div>
 
 
