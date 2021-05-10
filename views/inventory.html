@@ -7,7 +7,7 @@
         <div class="header">
           <div class="header-body">
             <div class="row align-items-center">
-              <div class="col">
+              <div class="col p-0">
                 <h6 class="header-pretitle">Overview</h6>
 
                 <h1 class="header-title text-truncate">Companies</h1>
@@ -19,7 +19,7 @@
           </div>
 
           <div class="row align-items-center">
-            <div class="col">
+            <div class="col p-0">
               <ul class="nav nav-tabs nav-overflow header-tabs">
                 <li class="nav-item">
                   <a href="#!" class="nav-link text-nowrap active">
@@ -35,6 +35,12 @@
         </div>
       </div>
 
+<!-- table starts -->
+<div class="container" style="padding-left: 0!important;padding-right: 0!important;">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-12 col-lg-12 col-xl-10 my-5 pt-5 text-center">
+            <div class="card m-auto">
+
       <div class="tab-content">
         <div class="table-responsive">
           <table class="table table-sm table-hover table-nowrap card-table">
@@ -49,6 +55,9 @@
                 <th colspan="2">
                   <a class="text-muted" href="#">Created at</a>
                 </th>
+                <th>
+                  <a class="text-muted" href="#">Action</a>
+                </th>
               </tr>
             </thead>
             <tbody class="list font-size-base">
@@ -60,11 +69,11 @@
                 <td class="text-center">
                   <span class="inbound-count m-auto">{{.Count}}</span>
                 </td>
-                <td class="text-center">
+                <td  colspan="2" class="text-center">
                   <time class="inbound-created">{{.FormatTime .InsertDate}}</time>
                 </td>
                 <td>
-                  <a href="/inbound/{{.OrderNumber}}" class="btn btn-secondary ml-2"> Edit </a>
+                  <a href="/inbound/{{.OrderNumber}}" class="btn btn-warning btn-block"> Edit </a>
                 </td>
               </tr>
               {{end}}
@@ -151,6 +160,12 @@
           </div>
         </div>
       </div>
+</div>
+</div>
+</div>
+</div>
+
+
     </div>
   </div>
 </div>
