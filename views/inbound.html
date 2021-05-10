@@ -1,150 +1,152 @@
 {{define "content"}}
-
 <div class="container">
-  <div class="row justify-content-center">
-    <div class="col-12 col-md-5 col-xl-4 my-5">
-      <!-- Heading -->
-      <h1 class="mb-2">Inbound</h1>
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-9 col-lg-7 col-xl-7 my-5 pt-5 text-center">
+            <div class="card m-auto" style="max-width: 450px;">
+             <div class="card-body">
+            <h1 class="font-weight-bold mb-3 text-dark">Inbound</h1>
+            <!-- Heading -->
 
-      <p class="text-muted mb-4">Adding parts to inventory</p>
-
-      <br />
-
-      <div id="alerts"></div>
-      <form method="post" id="item-form">
+            <!-- Subheading -->
+            <p class="text-muted text-center mb-4">
+              Adding parts to inventory
+            </p>
+            <br />
+            <div id="alerts"></div>
+            <form method="post" id="item-form">
         <!-- Email address -->
-        <div class="form-group mb-2">
-          <label class="tlabel">Internal Order Number</label>
-          <input id="ordernumber" name="ordernumber" type="ordernumber"
-            class="form-control {{if .email_invalid }} is-invalid {{end}}" autofocus="true" />
-        </div>
+              <div class="form-group mb-2">
+                <label class="tlabel">Internal Order Number</label>
+                <input id="ordernumber" name="ordernumber" type="ordernumber"
+                class="form-control {{if .email_invalid }} is-invalid {{end}}" autofocus="true" />
+              </div>
 
-        <div class="form-group mb-2" id="search-group">
-          <label class="tlabel">Search</label>
-          <input id="search" name="search" type="search" class="form-control {{if .email_invalid }} is-invalid {{end}}"
-            autofocus="true" />
-        </div>
+              <div class="form-group mb-2" id="search-group">
+                <label class="tlabel mt-3">Search</label>
+                <input id="search" name="search" type="search" class="form-control {{if .email_invalid }} is-invalid {{end}}"
+                  autofocus="true" />
+              </div>
+              <br />
 
-        <br />
+              <button id="confirm-button" class="btn btn-lg btn-block btn-primary mt-2 mb-4 disabled">
+                Confirm
+              </button>
 
-        <button id="confirm-button" class="btn btn-lg btn-block btn-primary mt-2 mb-4 disabled">
-          Confirm
-        </button>
+              <script>
+                let sel_len = 0;
+                $("body").on("keydown", "input, select", function (e) {
+                  if (e.which === 13) {
+                    var self = $(this);
+                    var selfid = self.attr("id");
+                    let search = $("#search");
 
-        <script>
-          let sel_len = 0;
-          $("body").on("keydown", "input, select", function (e) {
-            if (e.which === 13) {
-              var self = $(this);
-              var selfid = self.attr("id");
-              let search = $("#search");
-
-              if (selfid == "ordernumber" || selfid == "amount-" + sel_len) {
-                search.val("");
-                search.focus();
-              } else if (selfid == "search") {
-                $.get("/json/partsearch/" + $("#search").val()).always(
-                  (data) => {
-                    if (!data.length) {
-                      $("#alerts")
-                        .html(
-                          `
-                  <div class="alert alert-danger" role="alert">
-                    Item not found
-                  </div>
-                        `
-                        )
-                        .fadeIn();
-                      $("#alerts").delay(2500).fadeOut();
+                    if (selfid == "ordernumber" || selfid == "amount-" + sel_len) {
+                      search.val("");
                       search.focus();
-                      return;
+                    } else if (selfid == "search") {
+                      $.get("/json/partsearch/" + $("#search").val()).always(
+                        (data) => {
+                          if (!data.length) {
+                            $("#alerts")
+                              .html(
+                                `
+                        <div class="alert alert-danger" role="alert">
+                          Item not found
+                        </div>
+                              `
+                              )
+                              .fadeIn();
+                            $("#alerts").delay(2500).fadeOut();
+                            search.focus();
+                            return;
+                          }
+
+                          sel_len++;
+
+                          let group =
+                            $(".input-group:last").length != 0
+                              ? $(".input-group:last")
+                              : $("#search-group");
+                          group.after(
+                            `
+                            <div class="input-group mt-2">
+                              <select
+                              id="select-${sel_len}"
+                              class="custom-select"
+                              aria-label="select element"
+                              name="item"
+                              </select>
+
+                              <input
+                              id="amount-${sel_len}"
+                              type="number"
+                              class="form-control ml-2"
+                              placeholder="amount"
+                              aria-label="select amount"
+                              name="amount"
+                              >
+                              <button
+                                class="deletebtn btn">
+                                x
+                              </button>
+                              <div/>
+                            `
+                          );
+
+                          data.forEach((value) => {
+                            $(`#select-${sel_len}`).append(
+                              $("<option></option>")
+                                .val(value.description)
+                                .html(value.description)
+                            );
+                          });
+
+                          $("#amount-" + sel_len).focus();
+                        }
+                      );
                     }
 
-                    sel_len++;
-
-                    let group =
-                      $(".input-group:last").length != 0
-                        ? $(".input-group:last")
-                        : $("#search-group");
-                    group.after(
-                      `
-                      <div class="input-group mt-2">
-                        <select
-                        id="select-${sel_len}"
-                        class="custom-select"
-                        aria-label="select element"
-                        name="item"
-                        </select>
-
-                        <input
-                        id="amount-${sel_len}"
-                        type="number"
-                        class="form-control ml-2"
-                        placeholder="amount"
-                        aria-label="select amount"
-                        name="amount"
-                        >
-                        <button
-                          class="deletebtn btn">
-                          x
-                        </button>
-                        <div/>
-                      `
-                    );
-
-                    data.forEach((value) => {
-                      $(`#select-${sel_len}`).append(
-                        $("<option></option>")
-                          .val(value.description)
-                          .html(value.description)
-                      );
-                    });
-
-                    $("#amount-" + sel_len).focus();
+                    return false;
                   }
-                );
-              }
+                });
 
-              return false;
-            }
-          });
+                $("#confirm-button").click((e) => {
+                  e.preventDefault();
 
-          $("#confirm-button").click((e) => {
-            e.preventDefault();
+                  $("#alerts")
+                    .html(
+                      `
+                      <div class="alert alert-info" role="alert">
+                        Processing the items
+                      </div>
+                      `
+                    )
+                    .fadeIn();
 
-            $("#alerts")
-              .html(
-                `
-                <div class="alert alert-info" role="alert">
-                  Processing the items
-                </div>
-                `
-              )
-              .fadeIn();
+                  $.post("/inbound", $("#item-form").serialize()).done(() => {
+                    $("#alerts")
+                      .html(
+                        `
+                        <div class="alert alert-success" role="alert">
+                          Items processed!
+                        </div>
+                          `
+                      )
+                      .fadeIn();
+                    $("#alerts").delay(2500).fadeOut();
+                    window.location.replace("/inbound/" + $("#ordernumber").val());
+                  });
+                });
 
-            $.post("/inbound", $("#item-form").serialize()).done(() => {
-              $("#alerts")
-                .html(
-                  `
-                  <div class="alert alert-success" role="alert">
-                    Items processed!
-                  </div>
-                    `
-                )
-                .fadeIn();
-              $("#alerts").delay(2500).fadeOut();
-              window.location.replace("/inbound/" + $("#ordernumber").val());
-            });
-          });
-
-          $(document).on("click", "button.deletebtn", (e) => {
-            e.target.closest("div").remove();
-            return false;
-          });
-        </script>
-      </form>
+                $(document).on("click", "button.deletebtn", (e) => {
+                  e.target.closest("div").remove();
+                  return false;
+                });
+              </script>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
-
 {{end}}
